@@ -32,6 +32,7 @@ export const vehicles = pgTable("vehicles", {
   odometer: integer("odometer").default(0),
   lat: real("lat"),
   lng: real("lng"),
+  photos: text("photos").array(),
 });
 
 export const insertVehicleSchema = createInsertSchema(vehicles).omit({
@@ -73,6 +74,7 @@ export const trips = pgTable("trips", {
   driverName: varchar("driver_name", { length: 200 }).notNull(),
   startLocation: text("start_location").notNull(),
   endLocation: text("end_location"),
+  destination: text("destination"),
   startTime: timestamp("start_time").notNull().defaultNow(),
   endTime: timestamp("end_time"),
   distance: integer("distance"),
@@ -80,6 +82,12 @@ export const trips = pgTable("trips", {
   status: varchar("trip_status", { length: 20 }).notNull().default("active"),
   startOdometer: integer("start_odometer"),
   endOdometer: integer("end_odometer"),
+  startLat: real("start_lat"),
+  startLng: real("start_lng"),
+  currentLat: real("current_lat"),
+  currentLng: real("current_lng"),
+  destLat: real("dest_lat"),
+  destLng: real("dest_lng"),
 });
 
 export const insertTripSchema = createInsertSchema(trips).omit({

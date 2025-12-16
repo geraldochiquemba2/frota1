@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type VehicleStatus } from "./StatusBadge";
-import { MapPin, MoreVertical, Fuel, Gauge } from "lucide-react";
+import { MapPin, MoreVertical, Fuel, Gauge, Image } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +20,7 @@ interface VehicleCardProps {
   location?: string;
   fuelLevel?: number;
   odometer?: number;
+  photos?: string[];
   onView?: () => void;
   onEdit?: () => void;
   onAssignDriver?: () => void;
@@ -36,6 +37,7 @@ export function VehicleCard({
   location,
   fuelLevel,
   odometer,
+  photos,
   onView,
   onEdit,
   onAssignDriver,
@@ -66,6 +68,23 @@ export function VehicleCard({
         </DropdownMenu>
       </CardHeader>
       <CardContent className="space-y-3">
+        {photos && photos.length > 0 && (
+          <div className="flex gap-1 overflow-x-auto">
+            {photos.slice(0, 3).map((photo, index) => (
+              <img 
+                key={index} 
+                src={photo} 
+                alt={`${plate} foto ${index + 1}`} 
+                className="h-12 w-12 object-cover rounded-md flex-shrink-0" 
+              />
+            ))}
+            {photos.length > 3 && (
+              <div className="h-12 w-12 flex items-center justify-center bg-muted rounded-md flex-shrink-0">
+                <span className="text-xs text-muted-foreground">+{photos.length - 3}</span>
+              </div>
+            )}
+          </div>
+        )}
         {driver && (
           <div className="text-sm">
             <span className="text-muted-foreground">Motorista:</span>{" "}

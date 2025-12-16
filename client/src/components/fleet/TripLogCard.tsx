@@ -1,16 +1,22 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Clock, Gauge, User } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Clock, Gauge, User, Navigation, Target } from "lucide-react";
 
 interface TripLogCardProps {
   id: string;
   vehiclePlate: string;
   driverName: string;
   startLocation: string;
+  destination?: string;
   endLocation?: string;
   startTime: string;
   endTime?: string;
   distance?: number;
   purpose?: string;
+  startLat?: number;
+  startLng?: number;
+  currentLat?: number;
+  currentLng?: number;
   onClick?: () => void;
 }
 
@@ -19,11 +25,16 @@ export function TripLogCard({
   vehiclePlate,
   driverName,
   startLocation,
+  destination,
   endLocation,
   startTime,
   endTime,
   distance,
   purpose,
+  startLat,
+  startLng,
+  currentLat,
+  currentLng,
   onClick,
 }: TripLogCardProps) {
   const isOngoing = !endTime;
@@ -58,20 +69,35 @@ export function TripLogCard({
             <div className="flex flex-col items-center">
               <div className="h-2 w-2 rounded-full bg-green-500" />
               <div className="w-0.5 h-4 bg-border" />
-              <div className={`h-2 w-2 rounded-full ${isOngoing ? "bg-muted" : "bg-red-500"}`} />
+              <div className={`h-2 w-2 rounded-full ${isOngoing ? "bg-yellow-500" : "bg-red-500"}`} />
             </div>
             <div className="flex-1 space-y-2">
               <div>
                 <p className="text-xs text-muted-foreground">Partida</p>
                 <p className="text-sm">{startLocation}</p>
+                {startLat && startLng && (
+                  <p className="text-xs text-muted-foreground">GPS: {startLat.toFixed(4)}, {startLng.toFixed(4)}</p>
+                )}
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Destino</p>
-                <p className="text-sm">{endLocation || "—"}</p>
+                <p className="text-xs text-muted-foreground">Destino Planejado</p>
+                <p className="text-sm">{destination || endLocation || "—"}</p>
               </div>
+              {endLocation && destination && endLocation !== destination && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Destino Final</p>
+                  <p className="text-sm">{endLocation}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
+        {isOngoing && currentLat && currentLng && (
+          <div className="flex items-center gap-2 text-xs bg-muted/50 p-2 rounded-md">
+            <Navigation className="h-3.5 w-3.5 text-blue-500" />
+            <span>Posição atual: {currentLat.toFixed(4)}, {currentLng.toFixed(4)}</span>
+          </div>
+        )}
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />

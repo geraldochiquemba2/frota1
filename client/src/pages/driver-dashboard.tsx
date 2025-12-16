@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { 
@@ -19,7 +20,10 @@ import {
   Gauge,
   User,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Navigation,
+  Camera,
+  Target
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -28,10 +32,58 @@ import type { Driver, Trip, Alert, Vehicle } from "@shared/schema";
 export default function DriverDashboard() {
   const { toast } = useToast();
   const [startLocation, setStartLocation] = useState("");
+  const [destination, setDestination] = useState("");
   const [purpose, setPurpose] = useState("");
   const [startOdometer, setStartOdometer] = useState("");
   const [endLocation, setEndLocation] = useState("");
   const [endOdometer, setEndOdometer] = useState("");
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
+  const getCurrentLocation = () => {
+    setGettingLocation(true);
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          setGpsCoords({ lat: latitude, lng: longitude });
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            );
+            const data = await response.json();
+            if (data.display_name) {
+              setStartLocation(data.display_name.split(",").slice(0, 3).join(", "));
+            }
+          } catch {
+            setStartLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+          }
+          setGettingLocation(false);
+        },
+        () => {
+          toast({
+            title: "Localização não disponível",
+            description: "Não foi possível obter sua localização GPS",
+            variant: "destructive",
+          });
+          setGettingLocation(false);
+        },
+        { enableHighAccuracy: true }
+      );
+    } else {
+      toast({
+        title: "GPS não suportado",
+        description: "Seu navegador não suporta geolocalização",
+        variant: "destructive",
+      });
+      setGettingLocation(false);
+    }
+  };
 
   const { data: profile, isLoading: profileLoading } = useQuery<Driver>({
     queryKey: ["/api/driver/profile"],
@@ -54,19 +106,28 @@ export default function DriverDashboard() {
   });
 
   const startTripMutation = useMutation({
-    mutationFn: async (data: { startLocation: string; purpose: string; startOdometer?: number }) => {
+    mutationFn: async (data: { 
+      startLocation: string; 
+      destination: string;
+      purpose: string; 
+      startOdometer?: number;
+      startLat?: number;
+      startLng?: number;
+    }) => {
       return apiRequest("POST", "/api/driver/trips/start", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/driver/trips/active"] });
       queryClient.invalidateQueries({ queryKey: ["/api/driver/trips"] });
       queryClient.invalidateQueries({ queryKey: ["/api/driver/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
       setStartLocation("");
+      setDestination("");
       setPurpose("");
       setStartOdometer("");
       toast({
         title: "Viagem iniciada",
-        description: "Boa viagem!",
+        description: "Boa viagem! A central pode ver sua localização.",
       });
     },
     onError: (error: Error) => {
@@ -77,6 +138,37 @@ export default function DriverDashboard() {
       });
     },
   });
+
+  const updatePhotoMutation = useMutation({
+    mutationFn: async (photo: string) => {
+      return apiRequest("PATCH", "/api/driver/profile", { photo });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/driver/profile"] });
+      toast({
+        title: "Foto atualizada",
+        description: "Sua foto de perfil foi atualizada com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao atualizar foto",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result as string;
+        updatePhotoMutation.mutate(base64);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const completeTripMutation = useMutation({
     mutationFn: async (data: { tripId: string; endLocation: string; endOdometer?: number }) => {
@@ -117,10 +209,21 @@ export default function DriverDashboard() {
 
   const handleStartTrip = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!destination) {
+      toast({
+        title: "Destino obrigatório",
+        description: "Por favor, informe o destino da viagem",
+        variant: "destructive",
+      });
+      return;
+    }
     startTripMutation.mutate({
       startLocation: startLocation || profile?.homeBase || "Localização não informada",
+      destination,
       purpose: purpose || "Viagem de trabalho",
       startOdometer: startOdometer ? parseInt(startOdometer) : undefined,
+      startLat: gpsCoords?.lat,
+      startLng: gpsCoords?.lng,
     });
   };
 
@@ -152,11 +255,38 @@ export default function DriverDashboard() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold" data-testid="text-driver-name">
-            Olá, {profile?.name || "Motorista"}
-          </h1>
-          <p className="text-muted-foreground">Área do Motorista</p>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Avatar className="h-14 w-14">
+              <AvatarImage src={profile?.photo || undefined} alt={profile?.name} />
+              <AvatarFallback>
+                {profile?.name?.split(" ").map(n => n[0]).join("").toUpperCase() || "M"}
+              </AvatarFallback>
+            </Avatar>
+            <input
+              type="file"
+              ref={photoInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoChange}
+            />
+            <Button
+              size="icon"
+              variant="outline"
+              className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full"
+              onClick={() => photoInputRef.current?.click()}
+              disabled={updatePhotoMutation.isPending}
+              data-testid="button-change-photo"
+            >
+              <Camera className="h-3 w-3" />
+            </Button>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold" data-testid="text-driver-name">
+              Olá, {profile?.name || "Motorista"}
+            </h1>
+            <p className="text-muted-foreground">Área do Motorista</p>
+          </div>
         </div>
         <Badge variant={profile?.status === "available" ? "default" : "secondary"} data-testid="badge-driver-status">
           {profile?.status === "available" ? "Disponível" : profile?.status === "on_trip" ? "Em Viagem" : profile?.status}
@@ -218,9 +348,15 @@ export default function DriverDashboard() {
             <CardContent className="space-y-4">
               <div className="grid gap-2">
                 <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <MapPin className="h-4 w-4 text-green-500" />
                   <span>Origem: {activeTrip.startLocation}</span>
                 </div>
+                {activeTrip.destination && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Target className="h-4 w-4 text-red-500" />
+                    <span>Destino: {activeTrip.destination}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span>
@@ -277,13 +413,42 @@ export default function DriverDashboard() {
             <CardContent>
               <form onSubmit={handleStartTrip} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="startLocation">Local de Partida</Label>
+                  <Label htmlFor="startLocation">Local de Partida (GPS)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="startLocation"
+                      placeholder={gettingLocation ? "Obtendo localização..." : "Sua localização atual"}
+                      value={startLocation}
+                      onChange={(e) => setStartLocation(e.target.value)}
+                      data-testid="input-start-location"
+                      disabled={gettingLocation}
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      onClick={getCurrentLocation}
+                      disabled={gettingLocation}
+                      data-testid="button-get-location"
+                    >
+                      <Navigation className={`h-4 w-4 ${gettingLocation ? "animate-pulse" : ""}`} />
+                    </Button>
+                  </div>
+                  {gpsCoords && (
+                    <p className="text-xs text-muted-foreground">
+                      GPS: {gpsCoords.lat.toFixed(4)}, {gpsCoords.lng.toFixed(4)}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="destination">Destino *</Label>
                   <Input
-                    id="startLocation"
-                    placeholder={profile?.homeBase || "De onde você está saindo?"}
-                    value={startLocation}
-                    onChange={(e) => setStartLocation(e.target.value)}
-                    data-testid="input-start-location"
+                    id="destination"
+                    placeholder="Para onde você vai?"
+                    value={destination}
+                    onChange={(e) => setDestination(e.target.value)}
+                    data-testid="input-destination"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -310,7 +475,7 @@ export default function DriverDashboard() {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={startTripMutation.isPending}
+                  disabled={startTripMutation.isPending || !destination}
                   data-testid="button-start-trip"
                 >
                   <Play className="h-4 w-4 mr-2" />

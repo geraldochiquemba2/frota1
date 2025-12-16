@@ -292,6 +292,63 @@ export async function registerRoutes(
     }
   });
 
+  // Update driver profile (self)
+  app.patch("/api/driver/profile", async (req: any, res) => {
+    try {
+      if (!req.session.userId || req.session.userType !== "driver") {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+      const { photo } = req.body;
+      const driver = await storage.updateDriver(req.session.userId, { photo });
+      if (!driver) {
+        return res.status(404).json({ error: "Motorista não encontrado" });
+      }
+      res.json(driver);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao atualizar perfil" });
+    }
+  });
+
+  // Update trip location (for real-time tracking)
+  app.patch("/api/driver/trips/:id/location", async (req: any, res) => {
+    try {
+      if (!req.session.userId || req.session.userType !== "driver") {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+      
+      const trip = await storage.getTrip(req.params.id);
+      if (!trip || trip.driverId !== req.session.userId) {
+        return res.status(404).json({ error: "Viagem não encontrada" });
+      }
+
+      if (trip.status !== "active") {
+        return res.status(400).json({ error: "Esta viagem já foi finalizada" });
+      }
+
+      const { currentLat, currentLng } = req.body;
+      
+      const updatedTrip = await storage.updateTrip(trip.id, {
+        currentLat,
+        currentLng,
+      });
+
+      res.json(updatedTrip);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao atualizar localização" });
+    }
+  });
+
+  // Get all active trips (for central monitoring)
+  app.get("/api/trips/active", async (req, res) => {
+    try {
+      const allTrips = await storage.getTrips();
+      const activeTrips = allTrips.filter(t => t.status === "active");
+      res.json(activeTrips);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar viagens ativas" });
+    }
+  });
+
   // Get driver's trips
   app.get("/api/driver/trips", async (req: any, res) => {
     try {
@@ -342,7 +399,7 @@ export async function registerRoutes(
         vehicle = await storage.getVehicle(driver.assignedVehicleId);
       }
 
-      const { startLocation, purpose, startOdometer } = req.body;
+      const { startLocation, destination, purpose, startOdometer, startLat, startLng } = req.body;
       
       const trip = await storage.createTrip({
         vehicleId: vehicle?.id || "unassigned",
@@ -350,9 +407,14 @@ export async function registerRoutes(
         driverId: driver.id,
         driverName: driver.name,
         startLocation: startLocation || driver.homeBase || "Localização não informada",
+        destination: destination || null,
         purpose: purpose || "Viagem de trabalho",
         status: "active",
         startOdometer: startOdometer || null,
+        startLat: startLat || null,
+        startLng: startLng || null,
+        currentLat: startLat || null,
+        currentLng: startLng || null,
       });
 
       // Update driver status

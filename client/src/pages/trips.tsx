@@ -291,11 +291,16 @@ export default function Trips() {
               vehiclePlate={trip.vehiclePlate}
               driverName={trip.driverName}
               startLocation={trip.startLocation}
+              destination={trip.destination ?? undefined}
               endLocation={trip.endLocation ?? undefined}
               startTime={trip.startTime?.toISOString() ?? new Date().toISOString()}
               endTime={trip.endTime?.toISOString()}
               distance={trip.distance ?? undefined}
               purpose={trip.purpose ?? undefined}
+              startLat={trip.startLat ?? undefined}
+              startLng={trip.startLng ?? undefined}
+              currentLat={trip.currentLat ?? undefined}
+              currentLng={trip.currentLng ?? undefined}
               onClick={() => {}}
             />
           ))}
