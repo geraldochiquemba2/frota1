@@ -4,6 +4,7 @@ interface AuthUser {
   id: string;
   phone: string;
   name: string;
+  type?: "admin" | "driver";
 }
 
 async function fetchUser(): Promise<AuthUser | null> {
@@ -34,6 +35,8 @@ export function useAuth() {
     user,
     isLoading,
     isAuthenticated: !!user,
+    isDriver: user?.type === "driver",
+    isAdmin: user?.type === "admin" || !user?.type,
     refetch,
   };
 }

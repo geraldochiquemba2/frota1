@@ -1,0 +1,409 @@
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { 
+  Car, 
+  MapPin, 
+  Bell, 
+  Clock, 
+  Play, 
+  Square, 
+  Route,
+  Gauge,
+  User,
+  CheckCircle,
+  AlertTriangle
+} from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import type { Driver, Trip, Alert, Vehicle } from "@shared/schema";
+
+export default function DriverDashboard() {
+  const { toast } = useToast();
+  const [startLocation, setStartLocation] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const [startOdometer, setStartOdometer] = useState("");
+  const [endLocation, setEndLocation] = useState("");
+  const [endOdometer, setEndOdometer] = useState("");
+
+  const { data: profile, isLoading: profileLoading } = useQuery<Driver>({
+    queryKey: ["/api/driver/profile"],
+  });
+
+  const { data: activeTrip, isLoading: tripLoading } = useQuery<Trip | null>({
+    queryKey: ["/api/driver/trips/active"],
+  });
+
+  const { data: trips = [] } = useQuery<Trip[]>({
+    queryKey: ["/api/driver/trips"],
+  });
+
+  const { data: alerts = [] } = useQuery<Alert[]>({
+    queryKey: ["/api/driver/alerts"],
+  });
+
+  const { data: vehicle } = useQuery<Vehicle | null>({
+    queryKey: ["/api/driver/vehicle"],
+  });
+
+  const startTripMutation = useMutation({
+    mutationFn: async (data: { startLocation: string; purpose: string; startOdometer?: number }) => {
+      return apiRequest("POST", "/api/driver/trips/start", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/driver/trips/active"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/driver/trips"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/driver/profile"] });
+      setStartLocation("");
+      setPurpose("");
+      setStartOdometer("");
+      toast({
+        title: "Viagem iniciada",
+        description: "Boa viagem!",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao iniciar viagem",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const completeTripMutation = useMutation({
+    mutationFn: async (data: { tripId: string; endLocation: string; endOdometer?: number }) => {
+      return apiRequest("POST", `/api/driver/trips/${data.tripId}/complete`, { endLocation: data.endLocation, endOdometer: data.endOdometer });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/driver/trips/active"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/driver/trips"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/driver/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/driver/alerts"] });
+      setEndLocation("");
+      setEndOdometer("");
+      toast({
+        title: "Viagem finalizada",
+        description: "Viagem registrada com sucesso!",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao finalizar viagem",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const dismissAlertMutation = useMutation({
+    mutationFn: async (alertId: string) => {
+      return apiRequest("PATCH", `/api/driver/alerts/${alertId}/dismiss`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/driver/alerts"] });
+      toast({
+        title: "Alerta dispensado",
+      });
+    },
+  });
+
+  const handleStartTrip = (e: React.FormEvent) => {
+    e.preventDefault();
+    startTripMutation.mutate({
+      startLocation: startLocation || profile?.homeBase || "Localização não informada",
+      purpose: purpose || "Viagem de trabalho",
+      startOdometer: startOdometer ? parseInt(startOdometer) : undefined,
+    });
+  };
+
+  const handleCompleteTrip = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeTrip) return;
+    completeTripMutation.mutate({
+      tripId: activeTrip.id,
+      endLocation: endLocation || "Destino não informado",
+      endOdometer: endOdometer ? parseInt(endOdometer) : undefined,
+    });
+  };
+
+  const recentTrips = trips.filter(t => t.status === "completed").slice(0, 5);
+
+  if (profileLoading || tripLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="h-40" />
+          <Skeleton className="h-40" />
+          <Skeleton className="h-40" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold" data-testid="text-driver-name">
+            Olá, {profile?.name || "Motorista"}
+          </h1>
+          <p className="text-muted-foreground">Área do Motorista</p>
+        </div>
+        <Badge variant={profile?.status === "available" ? "default" : "secondary"} data-testid="badge-driver-status">
+          {profile?.status === "available" ? "Disponível" : profile?.status === "on_trip" ? "Em Viagem" : profile?.status}
+        </Badge>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Card data-testid="card-vehicle-info">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Veículo Atribuído</CardTitle>
+            <Car className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {vehicle ? (
+              <div>
+                <div className="text-2xl font-bold">{vehicle.plate}</div>
+                <p className="text-sm text-muted-foreground">
+                  {vehicle.make} {vehicle.model} ({vehicle.year})
+                </p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Nenhum veículo atribuído</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card data-testid="card-trips-count">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Viagens</CardTitle>
+            <Route className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{trips.length}</div>
+            <p className="text-sm text-muted-foreground">viagens realizadas</p>
+          </CardContent>
+        </Card>
+
+        <Card data-testid="card-alerts-count">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Alertas Ativos</CardTitle>
+            <Bell className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{alerts.length}</div>
+            <p className="text-sm text-muted-foreground">alertas pendentes</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {activeTrip ? (
+          <Card className="border-primary" data-testid="card-active-trip">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+                Viagem em Andamento
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span>Origem: {activeTrip.startLocation}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span>
+                    Início: {format(new Date(activeTrip.startTime), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                  </span>
+                </div>
+                {activeTrip.startOdometer && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Gauge className="h-4 w-4 text-muted-foreground" />
+                    <span>Odômetro inicial: {activeTrip.startOdometer} km</span>
+                  </div>
+                )}
+              </div>
+
+              <form onSubmit={handleCompleteTrip} className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="endLocation">Destino Final</Label>
+                  <Input
+                    id="endLocation"
+                    placeholder="Onde você está agora?"
+                    value={endLocation}
+                    onChange={(e) => setEndLocation(e.target.value)}
+                    data-testid="input-end-location"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endOdometer">Odômetro Final (km)</Label>
+                  <Input
+                    id="endOdometer"
+                    type="number"
+                    placeholder="Quilometragem atual"
+                    value={endOdometer}
+                    onChange={(e) => setEndOdometer(e.target.value)}
+                    data-testid="input-end-odometer"
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={completeTripMutation.isPending}
+                  data-testid="button-complete-trip"
+                >
+                  <Square className="h-4 w-4 mr-2" />
+                  {completeTripMutation.isPending ? "Finalizando..." : "Finalizar Viagem"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card data-testid="card-start-trip">
+            <CardHeader>
+              <CardTitle>Iniciar Nova Viagem</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleStartTrip} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="startLocation">Local de Partida</Label>
+                  <Input
+                    id="startLocation"
+                    placeholder={profile?.homeBase || "De onde você está saindo?"}
+                    value={startLocation}
+                    onChange={(e) => setStartLocation(e.target.value)}
+                    data-testid="input-start-location"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="purpose">Motivo da Viagem</Label>
+                  <Input
+                    id="purpose"
+                    placeholder="Entrega, coleta, etc."
+                    value={purpose}
+                    onChange={(e) => setPurpose(e.target.value)}
+                    data-testid="input-purpose"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="startOdometer">Odômetro Inicial (km)</Label>
+                  <Input
+                    id="startOdometer"
+                    type="number"
+                    placeholder="Quilometragem atual do veículo"
+                    value={startOdometer}
+                    onChange={(e) => setStartOdometer(e.target.value)}
+                    data-testid="input-start-odometer"
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={startTripMutation.isPending}
+                  data-testid="button-start-trip"
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  {startTripMutation.isPending ? "Iniciando..." : "Iniciar Viagem"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card data-testid="card-alerts">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Meus Alertas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {alerts.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <CheckCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>Nenhum alerta pendente</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {alerts.map((alert) => (
+                  <div 
+                    key={alert.id} 
+                    className="flex items-start justify-between gap-3 p-3 rounded-md bg-muted/50"
+                    data-testid={`alert-item-${alert.id}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-sm">{alert.title}</p>
+                        <p className="text-xs text-muted-foreground">{alert.description}</p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => dismissAlertMutation.mutate(alert.id)}
+                      data-testid={`button-dismiss-alert-${alert.id}`}
+                    >
+                      OK
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card data-testid="card-recent-trips">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Route className="h-5 w-5" />
+            Viagens Recentes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recentTrips.length === 0 ? (
+            <p className="text-center py-6 text-muted-foreground">
+              Nenhuma viagem realizada ainda
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {recentTrips.map((trip) => (
+                <div 
+                  key={trip.id} 
+                  className="flex items-center justify-between gap-4 p-3 rounded-md bg-muted/30"
+                  data-testid={`trip-item-${trip.id}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <div>
+                      <p className="font-medium text-sm">
+                        {trip.startLocation} → {trip.endLocation || "N/A"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(trip.startTime), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                        {trip.distance && ` • ${trip.distance} km`}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary">{trip.purpose || "Viagem"}</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

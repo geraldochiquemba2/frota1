@@ -9,6 +9,8 @@ import { ThemeProvider } from "@/components/fleet/ThemeProvider";
 import { ThemeToggle } from "@/components/fleet/ThemeToggle";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { LogOut, Truck } from "lucide-react";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Vehicles from "@/pages/vehicles";
@@ -19,6 +21,7 @@ import Trips from "@/pages/trips";
 import Alerts from "@/pages/alerts";
 import Settings from "@/pages/settings";
 import Landing from "@/pages/landing";
+import DriverDashboard from "@/pages/driver-dashboard";
 
 function Router() {
   return (
@@ -43,6 +46,52 @@ function LoadingScreen() {
         <Skeleton className="h-16 w-16 rounded-full" />
         <Skeleton className="h-4 w-32" />
       </div>
+    </div>
+  );
+}
+
+function DriverApp() {
+  const { user } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <Truck className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="font-semibold text-lg">FleetTrack</h1>
+              <p className="text-xs text-muted-foreground">Área do Motorista</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground hidden sm:block">
+              {user?.name}
+            </span>
+            <ThemeToggle />
+            <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </header>
+      <main>
+        <DriverDashboard />
+      </main>
     </div>
   );
 }
@@ -91,7 +140,7 @@ function AuthenticatedApp() {
 }
 
 function AppContent() {
-  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, isDriver } = useAuth();
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -99,6 +148,10 @@ function AppContent() {
 
   if (!isAuthenticated) {
     return <Landing />;
+  }
+
+  if (isDriver) {
+    return <DriverApp />;
   }
 
   return <AuthenticatedApp />;
