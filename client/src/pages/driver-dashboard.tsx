@@ -39,7 +39,9 @@ export default function DriverDashboard() {
   const [endOdometer, setEndOdometer] = useState("");
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [gettingLocation, setGettingLocation] = useState(false);
+  const [trackingActive, setTrackingActive] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const watchIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     getCurrentLocation();
@@ -207,6 +209,62 @@ export default function DriverDashboard() {
     },
   });
 
+  const updateLocationMutation = useMutation({
+    mutationFn: async ({ tripId, currentLat, currentLng }: { tripId: string; currentLat: number; currentLng: number }) => {
+      return apiRequest("PATCH", `/api/driver/trips/${tripId}/location`, { currentLat, currentLng });
+    },
+    onSuccess: () => {
+      // Invalidate to keep driver UI and map in sync
+      queryClient.invalidateQueries({ queryKey: ["/api/driver/trips/active"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+    },
+  });
+
+  const lastUpdateRef = useRef<number>(0);
+  const UPDATE_INTERVAL = 10000; // Only update every 10 seconds
+
+  useEffect(() => {
+    if (activeTrip && activeTrip.status === "active" && "geolocation" in navigator) {
+      setTrackingActive(true);
+      // Reset throttle to ensure first GPS fix is sent immediately
+      lastUpdateRef.current = 0;
+      
+      watchIdRef.current = navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setGpsCoords({ lat: latitude, lng: longitude });
+          
+          // Throttle updates to prevent excessive API calls
+          const now = Date.now();
+          if (now - lastUpdateRef.current >= UPDATE_INTERVAL) {
+            lastUpdateRef.current = now;
+            updateLocationMutation.mutate({
+              tripId: activeTrip.id,
+              currentLat: latitude,
+              currentLng: longitude,
+            });
+          }
+        },
+        (error) => {
+          console.error("GPS tracking error:", error);
+        },
+        { 
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 5000
+        }
+      );
+    }
+    
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+        setTrackingActive(false);
+      }
+    };
+  }, [activeTrip?.id, activeTrip?.status]);
+
   const handleStartTrip = (e: React.FormEvent) => {
     e.preventDefault();
     if (!destination) {
@@ -366,6 +424,12 @@ export default function DriverDashboard() {
                   <div className="flex items-center gap-2 text-sm">
                     <Gauge className="h-4 w-4 text-muted-foreground" />
                     <span>Odômetro inicial: {activeTrip.startOdometer} km</span>
+                  </div>
+                )}
+                {trackingActive && gpsCoords && (
+                  <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                    <Navigation className="h-4 w-4 animate-pulse" />
+                    <span>GPS ativo: {gpsCoords.lat.toFixed(4)}, {gpsCoords.lng.toFixed(4)}</span>
                   </div>
                 )}
               </div>

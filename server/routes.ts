@@ -385,6 +385,15 @@ export async function registerRoutes(
         currentLng,
       });
 
+      // Also update vehicle location for real-time map tracking
+      if (trip.vehicleId && trip.vehicleId !== "unassigned") {
+        await storage.updateVehicle(trip.vehicleId, {
+          lat: currentLat,
+          lng: currentLng,
+          status: "active",
+        });
+      }
+
       res.json(updatedTrip);
     } catch (error) {
       res.status(500).json({ error: "Erro ao atualizar localização" });
@@ -472,6 +481,15 @@ export async function registerRoutes(
 
       // Update driver status
       await storage.updateDriver(driver.id, { status: "on_trip" });
+
+      // Update vehicle location and status for real-time tracking
+      if (vehicle && startLat && startLng) {
+        await storage.updateVehicle(vehicle.id, {
+          lat: startLat,
+          lng: startLng,
+          status: "active",
+        });
+      }
 
       res.status(201).json(trip);
     } catch (error) {

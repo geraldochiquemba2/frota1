@@ -17,6 +17,7 @@ export default function LiveMap() {
 
   const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery<Vehicle[]>({
     queryKey: ["/api/vehicles"],
+    refetchInterval: 10000, // Refresh every 10 seconds for real-time tracking
   });
 
   const { data: drivers = [] } = useQuery<Driver[]>({
