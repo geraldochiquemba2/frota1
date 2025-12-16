@@ -199,6 +199,17 @@ export async function registerRoutes(
     }
   });
 
+  // Get all active trips (for central monitoring) - must be before :id route
+  app.get("/api/trips/active", async (req, res) => {
+    try {
+      const allTrips = await storage.getTrips();
+      const activeTrips = allTrips.filter(t => t.status === "active");
+      res.json(activeTrips);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar viagens ativas" });
+    }
+  });
+
   app.get("/api/trips/:id", async (req, res) => {
     try {
       const trip = await storage.getTrip(req.params.id);
@@ -397,17 +408,6 @@ export async function registerRoutes(
       res.json(updatedTrip);
     } catch (error) {
       res.status(500).json({ error: "Erro ao atualizar localização" });
-    }
-  });
-
-  // Get all active trips (for central monitoring)
-  app.get("/api/trips/active", async (req, res) => {
-    try {
-      const allTrips = await storage.getTrips();
-      const activeTrips = allTrips.filter(t => t.status === "active");
-      res.json(activeTrips);
-    } catch (error) {
-      res.status(500).json({ error: "Erro ao buscar viagens ativas" });
     }
   });
 
