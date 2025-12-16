@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { VehicleCard } from "@/components/fleet/VehicleCard";
 import { StatusBadge, type VehicleStatus } from "@/components/fleet/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -21,19 +23,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search, Filter } from "lucide-react";
-
-// todo: remove mock functionality
-const mockVehicles = [
-  { id: "v1", plate: "ABC-1234", make: "Ford", model: "Transit", year: 2022, status: "active" as VehicleStatus, driver: "João Silva", location: "Av. Paulista, 1000", fuelLevel: 75, odometer: 45230 },
-  { id: "v2", plate: "XYZ-5678", make: "Mercedes", model: "Sprinter", year: 2021, status: "idle" as VehicleStatus, driver: "Maria Santos", location: "Rua Augusta, 500", fuelLevel: 42, odometer: 78500 },
-  { id: "v3", plate: "DEF-9012", make: "Volkswagen", model: "Delivery", year: 2020, status: "maintenance" as VehicleStatus, location: "Oficina Central", fuelLevel: 90, odometer: 120000 },
-  { id: "v4", plate: "GHI-3456", make: "Fiat", model: "Ducato", year: 2023, status: "alert" as VehicleStatus, driver: "Carlos Oliveira", location: "BR-116 km 45", fuelLevel: 12, odometer: 15000 },
-  { id: "v5", plate: "JKL-7890", make: "Iveco", model: "Daily", year: 2022, status: "active" as VehicleStatus, driver: "Ana Silva", location: "Centro, RJ", fuelLevel: 88, odometer: 32000 },
-  { id: "v6", plate: "MNO-2345", make: "Renault", model: "Master", year: 2021, status: "idle" as VehicleStatus, location: "Patio Central", fuelLevel: 65, odometer: 55000 },
-];
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Vehicle, InsertVehicle } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Vehicles() {
-  const [vehicles, setVehicles] = useState(mockVehicles);
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<VehicleStatus | "all">("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -44,28 +39,63 @@ export default function Vehicles() {
     year: new Date().getFullYear(),
   });
 
+  const { data: vehicles = [], isLoading } = useQuery<Vehicle[]>({
+    queryKey: ["/api/vehicles"],
+  });
+
+  const createVehicleMutation = useMutation({
+    mutationFn: async (vehicle: Partial<InsertVehicle>) => {
+      const res = await apiRequest("POST", "/api/vehicles", vehicle);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/metrics"] });
+      toast({ title: "Veículo adicionado com sucesso!" });
+      setIsAddDialogOpen(false);
+      setNewVehicle({ plate: "", make: "", model: "", year: new Date().getFullYear() });
+    },
+    onError: () => {
+      toast({ title: "Erro ao adicionar veículo", variant: "destructive" });
+    },
+  });
+
+  const deleteVehicleMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/vehicles/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/metrics"] });
+      toast({ title: "Veículo excluído com sucesso!" });
+    },
+    onError: () => {
+      toast({ title: "Erro ao excluir veículo", variant: "destructive" });
+    },
+  });
+
   const filteredVehicles = vehicles.filter(v => {
     const matchesSearch = v.plate.toLowerCase().includes(search.toLowerCase()) ||
       v.make.toLowerCase().includes(search.toLowerCase()) ||
-      v.model.toLowerCase().includes(search.toLowerCase()) ||
-      v.driver?.toLowerCase().includes(search.toLowerCase());
+      v.model.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || v.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const handleAddVehicle = () => {
-    const id = `v${Date.now()}`;
-    setVehicles([...vehicles, {
-      ...newVehicle,
-      id,
-      status: "idle" as VehicleStatus,
+    if (!newVehicle.plate || !newVehicle.make || !newVehicle.model) {
+      toast({ title: "Preencha todos os campos", variant: "destructive" });
+      return;
+    }
+    createVehicleMutation.mutate({
+      plate: newVehicle.plate,
+      make: newVehicle.make,
+      model: newVehicle.model,
+      year: newVehicle.year,
+      status: "idle",
       fuelLevel: 100,
       odometer: 0,
-      location: "Não atribuído",
-    }]);
-    setNewVehicle({ plate: "", make: "", model: "", year: new Date().getFullYear() });
-    setIsAddDialogOpen(false);
-    console.log("Vehicle added:", newVehicle);
+    });
   };
 
   const statusCounts = {
@@ -143,7 +173,13 @@ export default function Vehicles() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleAddVehicle} data-testid="button-confirm-add">Adicionar Veículo</Button>
+              <Button 
+                onClick={handleAddVehicle} 
+                disabled={createVehicleMutation.isPending}
+                data-testid="button-confirm-add"
+              >
+                {createVehicleMutation.isPending ? "Adicionando..." : "Adicionar Veículo"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -197,21 +233,41 @@ export default function Vehicles() {
         ))}
       </div>
 
-      {filteredVehicles.length > 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
+        </div>
+      ) : filteredVehicles.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredVehicles.map(vehicle => (
             <VehicleCard
               key={vehicle.id}
-              {...vehicle}
-              onView={() => console.log("View", vehicle.id)}
-              onEdit={() => console.log("Edit", vehicle.id)}
-              onAssignDriver={() => console.log("Assign", vehicle.id)}
+              id={vehicle.id}
+              plate={vehicle.plate}
+              make={vehicle.make}
+              model={vehicle.model}
+              year={vehicle.year}
+              status={vehicle.status as VehicleStatus}
+              driver={vehicle.driverId ?? undefined}
+              location={vehicle.location ?? undefined}
+              fuelLevel={vehicle.fuelLevel ?? 0}
+              odometer={vehicle.odometer ?? 0}
+              onView={() => {}}
+              onEdit={() => {}}
+              onAssignDriver={() => {}}
             />
           ))}
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Nenhum veículo encontrado com os critérios informados.</p>
+          <p className="text-muted-foreground">
+            {vehicles.length === 0 
+              ? "Nenhum veículo cadastrado. Adicione seu primeiro veículo!" 
+              : "Nenhum veículo encontrado com os critérios informados."}
+          </p>
         </div>
       )}
     </div>

@@ -1,41 +1,55 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { MetricCard } from "@/components/fleet/MetricCard";
 import { VehicleCard } from "@/components/fleet/VehicleCard";
 import { AlertItem } from "@/components/fleet/AlertItem";
 import { FleetMap } from "@/components/fleet/FleetMap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Truck, Users, AlertTriangle, Wrench, ArrowRight, MapPin } from "lucide-react";
 import { Link } from "wouter";
-
-// todo: remove mock functionality
-const mockMetrics = {
-  totalVehicles: 48,
-  activeDrivers: 32,
-  activeAlerts: 7,
-  maintenanceDue: 4,
-};
-
-const mockVehicles = [
-  { id: "v1", plate: "ABC-1234", make: "Ford", model: "Transit", year: 2022, status: "active" as const, driver: "João Silva", location: "Av. Paulista, 1000", fuelLevel: 75, odometer: 45230, lat: -23.5505, lng: -46.6333 },
-  { id: "v2", plate: "XYZ-5678", make: "Mercedes", model: "Sprinter", year: 2021, status: "idle" as const, driver: "Maria Santos", location: "Rua Augusta, 500", fuelLevel: 42, odometer: 78500, lat: -23.5705, lng: -46.6533 },
-  { id: "v3", plate: "DEF-9012", make: "Volkswagen", model: "Delivery", year: 2020, status: "maintenance" as const, location: "Oficina Central", fuelLevel: 90, odometer: 120000, lat: -23.5305, lng: -46.6133 },
-  { id: "v4", plate: "GHI-3456", make: "Fiat", model: "Ducato", year: 2023, status: "alert" as const, driver: "Carlos Oliveira", location: "BR-116 km 45", fuelLevel: 12, odometer: 15000, lat: -23.5905, lng: -46.6733 },
-];
-
-const mockAlerts = [
-  { id: "a1", type: "fuel" as const, title: "Alerta de Combustível Baixo", description: "Veículo GHI-3456 com nível de combustível abaixo de 15%", timestamp: "10 minutos atrás" },
-  { id: "a2", type: "document" as const, title: "CNH Expirando", description: "CNH da motorista Maria Santos expira em 15 dias", timestamp: "1 hora atrás" },
-  { id: "a3", type: "maintenance" as const, title: "Manutenção Atrasada", description: "Veículo ABC-1234 está atrasado para troca de óleo", timestamp: "2 horas atrás" },
-];
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Vehicle, Alert } from "@shared/schema";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function Dashboard() {
   const [selectedVehicle, setSelectedVehicle] = useState<string | undefined>();
-  const [alerts, setAlerts] = useState(mockAlerts);
 
-  const handleDismissAlert = (id: string) => {
-    setAlerts(alerts.filter(a => a.id !== id));
+  const { data: metrics, isLoading: metricsLoading } = useQuery<{
+    totalVehicles: number;
+    activeDrivers: number;
+    activeAlerts: number;
+    maintenanceDue: number;
+  }>({
+    queryKey: ["/api/metrics"],
+  });
+
+  const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery<Vehicle[]>({
+    queryKey: ["/api/vehicles"],
+  });
+
+  const { data: alerts = [], isLoading: alertsLoading } = useQuery<Alert[]>({
+    queryKey: ["/api/alerts"],
+  });
+
+  const dismissAlertMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("PATCH", `/api/alerts/${id}/dismiss`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/alerts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/metrics"] });
+    },
+  });
+
+  const formatTimestamp = (timestamp: Date | null) => {
+    if (!timestamp) return "";
+    return formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: ptBR });
   };
+
+  const recentVehicles = vehicles.slice(0, 4);
 
   return (
     <div className="space-y-6 p-6">
@@ -53,29 +67,37 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Total de Veículos"
-          value={mockMetrics.totalVehicles}
-          icon={Truck}
-          trend={{ value: 12, isPositive: true }}
-        />
-        <MetricCard
-          title="Motoristas Ativos"
-          value={mockMetrics.activeDrivers}
-          icon={Users}
-          trend={{ value: 5, isPositive: true }}
-        />
-        <MetricCard
-          title="Alertas Ativos"
-          value={mockMetrics.activeAlerts}
-          icon={AlertTriangle}
-          trend={{ value: 15, isPositive: false }}
-        />
-        <MetricCard
-          title="Manutenção Pendente"
-          value={mockMetrics.maintenanceDue}
-          icon={Wrench}
-        />
+        {metricsLoading ? (
+          <>
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+          </>
+        ) : (
+          <>
+            <MetricCard
+              title="Total de Veículos"
+              value={metrics?.totalVehicles ?? 0}
+              icon={Truck}
+            />
+            <MetricCard
+              title="Motoristas Ativos"
+              value={metrics?.activeDrivers ?? 0}
+              icon={Users}
+            />
+            <MetricCard
+              title="Alertas Ativos"
+              value={metrics?.activeAlerts ?? 0}
+              icon={AlertTriangle}
+            />
+            <MetricCard
+              title="Manutenção Pendente"
+              value={metrics?.maintenanceDue ?? 0}
+              icon={Wrench}
+            />
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -94,18 +116,22 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="h-[350px] rounded-md overflow-hidden">
-                <FleetMap
-                  vehicles={mockVehicles.map(v => ({
-                    id: v.id,
-                    plate: v.plate,
-                    lat: v.lat,
-                    lng: v.lng,
-                    status: v.status,
-                    driver: v.driver,
-                  }))}
-                  selectedVehicleId={selectedVehicle}
-                  onVehicleClick={setSelectedVehicle}
-                />
+                {vehiclesLoading ? (
+                  <Skeleton className="w-full h-full" />
+                ) : (
+                  <FleetMap
+                    vehicles={vehicles.filter(v => v.lat && v.lng).map(v => ({
+                      id: v.id,
+                      plate: v.plate,
+                      lat: v.lat!,
+                      lng: v.lng!,
+                      status: v.status as "active" | "idle" | "maintenance" | "alert",
+                      driver: v.driverId ?? undefined,
+                    }))}
+                    selectedVehicleId={selectedVehicle}
+                    onVehicleClick={setSelectedVehicle}
+                  />
+                )}
               </div>
             </CardContent>
           </Card>
@@ -123,12 +149,22 @@ export default function Dashboard() {
               </Button>
             </CardHeader>
             <CardContent className="space-y-2">
-              {alerts.length > 0 ? (
-                alerts.map(alert => (
+              {alertsLoading ? (
+                <>
+                  <Skeleton className="h-16" />
+                  <Skeleton className="h-16" />
+                  <Skeleton className="h-16" />
+                </>
+              ) : alerts.length > 0 ? (
+                alerts.slice(0, 5).map(alert => (
                   <AlertItem
                     key={alert.id}
-                    {...alert}
-                    onDismiss={() => handleDismissAlert(alert.id)}
+                    id={alert.id}
+                    type={alert.type as "fuel" | "maintenance" | "document" | "speed"}
+                    title={alert.title}
+                    description={alert.description}
+                    timestamp={formatTimestamp(alert.timestamp)}
+                    onDismiss={() => dismissAlertMutation.mutate(alert.id)}
                   />
                 ))
               ) : (
@@ -147,15 +183,37 @@ export default function Dashboard() {
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {mockVehicles.map(vehicle => (
-            <VehicleCard
-              key={vehicle.id}
-              {...vehicle}
-              onView={() => console.log("View", vehicle.id)}
-              onEdit={() => console.log("Edit", vehicle.id)}
-              onAssignDriver={() => console.log("Assign", vehicle.id)}
-            />
-          ))}
+          {vehiclesLoading ? (
+            <>
+              <Skeleton className="h-48" />
+              <Skeleton className="h-48" />
+              <Skeleton className="h-48" />
+              <Skeleton className="h-48" />
+            </>
+          ) : recentVehicles.length > 0 ? (
+            recentVehicles.map(vehicle => (
+              <VehicleCard
+                key={vehicle.id}
+                id={vehicle.id}
+                plate={vehicle.plate}
+                make={vehicle.make}
+                model={vehicle.model}
+                year={vehicle.year}
+                status={vehicle.status as "active" | "idle" | "maintenance" | "alert"}
+                driver={vehicle.driverId ?? undefined}
+                location={vehicle.location ?? undefined}
+                fuelLevel={vehicle.fuelLevel ?? 0}
+                odometer={vehicle.odometer ?? 0}
+                onView={() => {}}
+                onEdit={() => {}}
+                onAssignDriver={() => {}}
+              />
+            ))
+          ) : (
+            <p className="text-muted-foreground col-span-full text-center py-4">
+              Nenhum veículo cadastrado. Adicione seu primeiro veículo!
+            </p>
+          )}
         </div>
       </div>
     </div>

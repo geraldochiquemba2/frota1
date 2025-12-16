@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { DriverCard } from "@/components/fleet/DriverCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -14,27 +15,43 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Plus, Search } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Driver, InsertDriver } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
-// todo: remove mock functionality
-const mockDrivers = [
-  { id: "d1", name: "João Silva", phone: "+55 11 99999-1234", email: "joao.silva@exemplo.com", licenseExpiry: "2025-06-15", status: "on-trip" as const, assignedVehicle: "ABC-1234" },
-  { id: "d2", name: "Maria Santos", phone: "+55 11 88888-5678", email: "maria.santos@exemplo.com", licenseExpiry: "2025-01-10", status: "available" as const },
-  { id: "d3", name: "Carlos Oliveira", phone: "+55 11 77777-9012", email: "carlos.oliveira@exemplo.com", licenseExpiry: "2024-12-20", status: "off-duty" as const, assignedVehicle: "XYZ-5678" },
-  { id: "d4", name: "Ana Silva", phone: "+55 11 66666-3456", email: "ana.silva@exemplo.com", licenseExpiry: "2026-03-20", status: "on-trip" as const, assignedVehicle: "JKL-7890" },
-  { id: "d5", name: "Pedro Costa", phone: "+55 11 55555-7890", email: "pedro.costa@exemplo.com", licenseExpiry: "2025-09-01", status: "available" as const },
-  { id: "d6", name: "Lucia Ferreira", phone: "+55 11 44444-2345", email: "lucia.ferreira@exemplo.com", licenseExpiry: "2025-04-15", status: "off-duty" as const },
-];
+type DriverStatus = "available" | "on-trip" | "off-duty";
 
 export default function Drivers() {
-  const [drivers, setDrivers] = useState(mockDrivers);
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "available" | "on-trip" | "off-duty">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | DriverStatus>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newDriver, setNewDriver] = useState({
     name: "",
     phone: "",
     email: "",
     licenseExpiry: "",
+  });
+
+  const { data: drivers = [], isLoading } = useQuery<Driver[]>({
+    queryKey: ["/api/drivers"],
+  });
+
+  const createDriverMutation = useMutation({
+    mutationFn: async (driver: Partial<InsertDriver>) => {
+      const res = await apiRequest("POST", "/api/drivers", driver);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/metrics"] });
+      toast({ title: "Motorista adicionado com sucesso!" });
+      setIsAddDialogOpen(false);
+      setNewDriver({ name: "", phone: "", email: "", licenseExpiry: "" });
+    },
+    onError: () => {
+      toast({ title: "Erro ao adicionar motorista", variant: "destructive" });
+    },
   });
 
   const filteredDrivers = drivers.filter(d => {
@@ -46,15 +63,17 @@ export default function Drivers() {
   });
 
   const handleAddDriver = () => {
-    const id = `d${Date.now()}`;
-    setDrivers([...drivers, {
-      ...newDriver,
-      id,
-      status: "available" as const,
-    }]);
-    setNewDriver({ name: "", phone: "", email: "", licenseExpiry: "" });
-    setIsAddDialogOpen(false);
-    console.log("Driver added:", newDriver);
+    if (!newDriver.name || !newDriver.phone || !newDriver.email || !newDriver.licenseExpiry) {
+      toast({ title: "Preencha todos os campos", variant: "destructive" });
+      return;
+    }
+    createDriverMutation.mutate({
+      name: newDriver.name,
+      phone: newDriver.phone,
+      email: newDriver.email,
+      licenseExpiry: newDriver.licenseExpiry,
+      status: "available",
+    });
   };
 
   const statusCounts = {
@@ -130,7 +149,13 @@ export default function Drivers() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleAddDriver} data-testid="button-confirm-add-driver">Adicionar Motorista</Button>
+              <Button 
+                onClick={handleAddDriver} 
+                disabled={createDriverMutation.isPending}
+                data-testid="button-confirm-add-driver"
+              >
+                {createDriverMutation.isPending ? "Adicionando..." : "Adicionar Motorista"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -163,19 +188,35 @@ export default function Drivers() {
         ))}
       </div>
 
-      {filteredDrivers.length > 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
+        </div>
+      ) : filteredDrivers.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredDrivers.map(driver => (
             <DriverCard
               key={driver.id}
-              {...driver}
-              onClick={() => console.log("Driver clicked:", driver.id)}
+              id={driver.id}
+              name={driver.name}
+              phone={driver.phone}
+              email={driver.email}
+              licenseExpiry={driver.licenseExpiry}
+              status={driver.status as DriverStatus}
+              assignedVehicle={driver.assignedVehicleId ?? undefined}
+              onClick={() => {}}
             />
           ))}
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Nenhum motorista encontrado com os critérios informados.</p>
+          <p className="text-muted-foreground">
+            {drivers.length === 0 
+              ? "Nenhum motorista cadastrado. Adicione seu primeiro motorista!" 
+              : "Nenhum motorista encontrado com os critérios informados."}
+          </p>
         </div>
       )}
     </div>
