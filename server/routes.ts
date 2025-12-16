@@ -77,6 +77,59 @@ export async function registerRoutes(
     }
   });
 
+  // Assign driver to vehicle
+  app.post("/api/vehicles/:id/assign-driver", async (req, res) => {
+    try {
+      const { driverId } = req.body;
+      
+      // Validate driverId is string or null
+      if (driverId !== null && driverId !== undefined && typeof driverId !== 'string') {
+        return res.status(400).json({ error: "driverId deve ser uma string ou null" });
+      }
+      
+      const vehicleId = req.params.id;
+      
+      const vehicle = await storage.getVehicle(vehicleId);
+      if (!vehicle) {
+        return res.status(404).json({ error: "Veículo não encontrado" });
+      }
+
+      // If driverId is null, unassign driver
+      if (!driverId) {
+        // Unassign previous driver if exists
+        if (vehicle.driverId) {
+          await storage.updateDriver(vehicle.driverId, { assignedVehicleId: null });
+        }
+        const updatedVehicle = await storage.updateVehicle(vehicleId, { driverId: null });
+        return res.json(updatedVehicle);
+      }
+
+      const driver = await storage.getDriver(driverId);
+      if (!driver) {
+        return res.status(404).json({ error: "Motorista não encontrado" });
+      }
+
+      // Unassign previous driver from this vehicle if exists
+      if (vehicle.driverId && vehicle.driverId !== driverId) {
+        await storage.updateDriver(vehicle.driverId, { assignedVehicleId: null });
+      }
+
+      // Unassign this driver from previous vehicle if exists
+      if (driver.assignedVehicleId && driver.assignedVehicleId !== vehicleId) {
+        await storage.updateVehicle(driver.assignedVehicleId, { driverId: null });
+      }
+
+      // Assign driver to vehicle (both directions)
+      const updatedVehicle = await storage.updateVehicle(vehicleId, { driverId });
+      await storage.updateDriver(driverId, { assignedVehicleId: vehicleId });
+
+      res.json(updatedVehicle);
+    } catch (error) {
+      console.error("Error assigning driver:", error);
+      res.status(500).json({ error: "Erro ao atribuir motorista" });
+    }
+  });
+
   // Drivers
   app.get("/api/drivers", async (req, res) => {
     try {

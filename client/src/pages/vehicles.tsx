@@ -22,9 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Filter, Camera, X, Edit } from "lucide-react";
+import { Plus, Search, Filter, Camera, X, UserPlus } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Vehicle, InsertVehicle } from "@shared/schema";
+import type { Vehicle, InsertVehicle, Driver } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Vehicles() {
@@ -33,7 +33,9 @@ export default function Vehicles() {
   const [statusFilter, setStatusFilter] = useState<VehicleStatus | "all">("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [selectedDriverId, setSelectedDriverId] = useState<string>("");
   const [newVehicle, setNewVehicle] = useState({
     plate: "",
     make: "",
@@ -55,6 +57,10 @@ export default function Vehicles() {
 
   const { data: vehicles = [], isLoading } = useQuery<Vehicle[]>({
     queryKey: ["/api/vehicles"],
+  });
+
+  const { data: drivers = [] } = useQuery<Driver[]>({
+    queryKey: ["/api/drivers"],
   });
 
   const createVehicleMutation = useMutation({
@@ -104,6 +110,24 @@ export default function Vehicles() {
     },
   });
 
+  const assignDriverMutation = useMutation({
+    mutationFn: async ({ vehicleId, driverId }: { vehicleId: string; driverId: string | null }) => {
+      const res = await apiRequest("POST", `/api/vehicles/${vehicleId}/assign-driver`, { driverId });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
+      toast({ title: "Motorista atribuído com sucesso!" });
+      setIsAssignDialogOpen(false);
+      setSelectedVehicle(null);
+      setSelectedDriverId("");
+    },
+    onError: () => {
+      toast({ title: "Erro ao atribuir motorista", variant: "destructive" });
+    },
+  });
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) => {
     const files = e.target.files;
     if (!files) return;
@@ -141,6 +165,26 @@ export default function Vehicles() {
       photos: vehicle.photos || [],
     });
     setIsEditDialogOpen(true);
+  };
+
+  const openAssignDialog = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setSelectedDriverId(vehicle.driverId || "");
+    setIsAssignDialogOpen(true);
+  };
+
+  const handleAssignDriver = () => {
+    if (!selectedVehicle) return;
+    assignDriverMutation.mutate({
+      vehicleId: selectedVehicle.id,
+      driverId: selectedDriverId === "none" || !selectedDriverId ? null : selectedDriverId,
+    });
+  };
+
+  const getDriverName = (driverId: string | null) => {
+    if (!driverId) return undefined;
+    const driver = drivers.find(d => d.id === driverId);
+    return driver?.name;
   };
 
   const filteredVehicles = vehicles.filter(v => {
@@ -391,14 +435,14 @@ export default function Vehicles() {
               model={vehicle.model}
               year={vehicle.year}
               status={vehicle.status as VehicleStatus}
-              driver={vehicle.driverId ?? undefined}
+              driver={getDriverName(vehicle.driverId)}
               location={vehicle.location ?? undefined}
               fuelLevel={vehicle.fuelLevel ?? 0}
               odometer={vehicle.odometer ?? 0}
               photos={vehicle.photos ?? undefined}
               onView={() => openEditDialog(vehicle)}
               onEdit={() => openEditDialog(vehicle)}
-              onAssignDriver={() => {}}
+              onAssignDriver={() => openAssignDialog(vehicle)}
             />
           ))}
         </div>
@@ -524,6 +568,44 @@ export default function Vehicles() {
               data-testid="button-confirm-edit"
             >
               {updateVehicleMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Atribuir Motorista</DialogTitle>
+            <DialogDescription>
+              Selecione um motorista para atribuir ao veículo {selectedVehicle?.plate}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="driver-select">Motorista</Label>
+            <Select value={selectedDriverId} onValueChange={setSelectedDriverId}>
+              <SelectTrigger className="mt-2" data-testid="select-driver">
+                <UserPlus className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Selecione um motorista" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum (remover atribuição)</SelectItem>
+                {drivers.map(driver => (
+                  <SelectItem key={driver.id} value={driver.id}>
+                    {driver.name} {driver.assignedVehicleId && driver.assignedVehicleId !== selectedVehicle?.id ? "(já atribuído)" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>Cancelar</Button>
+            <Button 
+              onClick={handleAssignDriver} 
+              disabled={assignDriverMutation.isPending}
+              data-testid="button-confirm-assign"
+            >
+              {assignDriverMutation.isPending ? "Atribuindo..." : "Atribuir Motorista"}
             </Button>
           </DialogFooter>
         </DialogContent>
