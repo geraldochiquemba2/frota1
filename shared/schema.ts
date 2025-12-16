@@ -52,6 +52,9 @@ export const drivers = pgTable("drivers", {
   status: varchar("status", { length: 20 }).notNull().default("available"),
   assignedVehicleId: varchar("assigned_vehicle_id"),
   photo: text("photo"),
+  homeBase: varchar("home_base", { length: 200 }),
+  mileageAlertThreshold: integer("mileage_alert_threshold"),
+  alertsEnabled: boolean("alerts_enabled").default(true),
 });
 
 export const insertDriverSchema = createInsertSchema(drivers).omit({
@@ -74,6 +77,9 @@ export const trips = pgTable("trips", {
   endTime: timestamp("end_time"),
   distance: integer("distance"),
   purpose: varchar("purpose", { length: 100 }),
+  status: varchar("trip_status", { length: 20 }).notNull().default("active"),
+  startOdometer: integer("start_odometer"),
+  endOdometer: integer("end_odometer"),
 });
 
 export const insertTripSchema = createInsertSchema(trips).omit({
