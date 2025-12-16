@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type VehicleStatus } from "./StatusBadge";
-import { MapPin, MoreVertical, Fuel, Gauge, Image } from "lucide-react";
+import { MapPin, MoreVertical, Fuel, Gauge, Image, UserMinus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +24,7 @@ interface VehicleCardProps {
   onView?: () => void;
   onEdit?: () => void;
   onAssignDriver?: () => void;
+  onRemoveDriver?: () => void;
 }
 
 export function VehicleCard({
@@ -41,6 +42,7 @@ export function VehicleCard({
   onView,
   onEdit,
   onAssignDriver,
+  onRemoveDriver,
 }: VehicleCardProps) {
   return (
     <Card className="hover-elevate" data-testid={`card-vehicle-${id}`}>
@@ -64,6 +66,12 @@ export function VehicleCard({
             <DropdownMenuItem onClick={onView} data-testid={`menu-item-view-${id}`}>Ver Detalhes</DropdownMenuItem>
             <DropdownMenuItem onClick={onEdit} data-testid={`menu-item-edit-${id}`}>Editar Veículo</DropdownMenuItem>
             <DropdownMenuItem onClick={onAssignDriver} data-testid={`menu-item-assign-${id}`}>Atribuir Motorista</DropdownMenuItem>
+            {driver && (
+              <DropdownMenuItem onClick={onRemoveDriver} data-testid={`menu-item-remove-driver-${id}`} className="text-destructive">
+                <UserMinus className="h-4 w-4 mr-2" />
+                Remover Motorista
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
@@ -71,12 +79,16 @@ export function VehicleCard({
         {photos && photos.length > 0 && (
           <div className="flex gap-1 overflow-x-auto">
             {photos.slice(0, 3).map((photo, index) => (
-              <img 
-                key={index} 
-                src={photo} 
-                alt={`${plate} foto ${index + 1}`} 
-                className="h-12 w-12 object-cover rounded-md flex-shrink-0" 
-              />
+              <div key={index} className="relative flex-shrink-0">
+                <img 
+                  src={photo} 
+                  alt={`${plate} foto ${index + 1}`} 
+                  className={`h-12 w-12 object-cover rounded-md ${index === 0 ? "ring-2 ring-primary" : ""}`}
+                />
+                {index === 0 && (
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] bg-primary text-primary-foreground px-1 rounded">Capa</span>
+                )}
+              </div>
             ))}
             {photos.length > 3 && (
               <div className="h-12 w-12 flex items-center justify-center bg-muted rounded-md flex-shrink-0">

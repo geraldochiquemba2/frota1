@@ -115,10 +115,14 @@ export default function Vehicles() {
       const res = await apiRequest("POST", `/api/vehicles/${vehicleId}/assign-driver`, { driverId });
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
-      toast({ title: "Motorista atribuído com sucesso!" });
+      if (variables.driverId === null) {
+        toast({ title: "Motorista removido com sucesso!" });
+      } else {
+        toast({ title: "Motorista atribuído com sucesso!" });
+      }
       setIsAssignDialogOpen(false);
       setSelectedVehicle(null);
       setSelectedDriverId("");
@@ -338,17 +342,18 @@ export default function Vehicles() {
                   <div className="flex flex-wrap gap-2 mt-2">
                     {newVehicle.photos.map((photo, index) => (
                       <div key={index} className="relative">
-                        <img src={photo} alt={`Foto ${index + 1}`} className="h-16 w-16 object-cover rounded-md" />
-                        <Button
+                        <img src={photo} alt={`Foto ${index + 1}`} className={`h-16 w-16 object-cover rounded-md ${index === 0 ? "ring-2 ring-primary" : ""}`} />
+                        {index === 0 && (
+                          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[10px] bg-primary text-primary-foreground px-1 rounded">Capa</span>
+                        )}
+                        <button
                           type="button"
-                          size="icon"
-                          variant="destructive"
-                          className="absolute -top-2 -right-2 h-5 w-5"
+                          className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover-elevate"
                           onClick={() => removePhoto(index, false)}
                           data-testid={`button-remove-photo-${index}`}
                         >
                           <X className="h-3 w-3" />
-                        </Button>
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -443,6 +448,14 @@ export default function Vehicles() {
               onView={() => openEditDialog(vehicle)}
               onEdit={() => openEditDialog(vehicle)}
               onAssignDriver={() => openAssignDialog(vehicle)}
+              onRemoveDriver={() => {
+                if (vehicle.driverId) {
+                  assignDriverMutation.mutate({
+                    vehicleId: vehicle.id,
+                    driverId: null,
+                  });
+                }
+              }}
             />
           ))}
         </div>
@@ -543,17 +556,18 @@ export default function Vehicles() {
                 <div className="flex flex-wrap gap-2 mt-2">
                   {editVehicle.photos.map((photo, index) => (
                     <div key={index} className="relative">
-                      <img src={photo} alt={`Foto ${index + 1}`} className="h-16 w-16 object-cover rounded-md" />
-                      <Button
+                      <img src={photo} alt={`Foto ${index + 1}`} className={`h-16 w-16 object-cover rounded-md ${index === 0 ? "ring-2 ring-primary" : ""}`} />
+                      {index === 0 && (
+                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[10px] bg-primary text-primary-foreground px-1 rounded">Capa</span>
+                      )}
+                      <button
                         type="button"
-                        size="icon"
-                        variant="destructive"
-                        className="absolute -top-2 -right-2 h-5 w-5"
+                        className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover-elevate"
                         onClick={() => removePhoto(index, true)}
                         data-testid={`button-edit-remove-photo-${index}`}
                       >
                         <X className="h-3 w-3" />
-                      </Button>
+                      </button>
                     </div>
                   ))}
                 </div>

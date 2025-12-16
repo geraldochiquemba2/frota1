@@ -270,16 +270,15 @@ export default function DriverDashboard() {
               className="hidden"
               onChange={handlePhotoChange}
             />
-            <Button
-              size="icon"
-              variant="outline"
-              className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full"
+            <button
+              type="button"
+              className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-background border flex items-center justify-center hover-elevate active-elevate-2"
               onClick={() => photoInputRef.current?.click()}
               disabled={updatePhotoMutation.isPending}
               data-testid="button-change-photo"
             >
               <Camera className="h-3 w-3" />
-            </Button>
+            </button>
           </div>
           <div>
             <h1 className="text-2xl font-bold" data-testid="text-driver-name">
