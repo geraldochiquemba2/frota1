@@ -1,33 +1,64 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { FleetMap } from "@/components/fleet/FleetMap";
 import { VehicleCard } from "@/components/fleet/VehicleCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, X, List, Map as MapIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Search, X, List } from "lucide-react";
 import type { VehicleStatus } from "@/components/fleet/StatusBadge";
-
-// todo: remove mock functionality
-const mockVehicles = [
-  { id: "v1", plate: "ABC-1234", make: "Ford", model: "Transit", year: 2022, status: "active" as VehicleStatus, driver: "João Silva", location: "Av. Paulista, 1000", fuelLevel: 75, odometer: 45230, lat: -23.5505, lng: -46.6333 },
-  { id: "v2", plate: "XYZ-5678", make: "Mercedes", model: "Sprinter", year: 2021, status: "idle" as VehicleStatus, driver: "Maria Santos", location: "Rua Augusta, 500", fuelLevel: 42, odometer: 78500, lat: -23.5705, lng: -46.6533 },
-  { id: "v3", plate: "DEF-9012", make: "Volkswagen", model: "Delivery", year: 2020, status: "maintenance" as VehicleStatus, location: "Oficina Central", fuelLevel: 90, odometer: 120000, lat: -23.5305, lng: -46.6133 },
-  { id: "v4", plate: "GHI-3456", make: "Fiat", model: "Ducato", year: 2023, status: "alert" as VehicleStatus, driver: "Carlos Oliveira", location: "BR-116 km 45", fuelLevel: 12, odometer: 15000, lat: -23.5905, lng: -46.6733 },
-  { id: "v5", plate: "JKL-7890", make: "Iveco", model: "Daily", year: 2022, status: "active" as VehicleStatus, driver: "Ana Silva", location: "Centro, RJ", fuelLevel: 88, odometer: 32000, lat: -23.5405, lng: -46.6433 },
-];
+import type { Vehicle, Driver } from "@shared/schema";
 
 export default function LiveMap() {
   const [selectedVehicle, setSelectedVehicle] = useState<string | undefined>();
   const [search, setSearch] = useState("");
+
+  const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery<Vehicle[]>({
+    queryKey: ["/api/vehicles"],
+  });
+
+  const { data: drivers = [] } = useQuery<Driver[]>({
+    queryKey: ["/api/drivers"],
+  });
+
   const [showSidebar, setShowSidebar] = useState(true);
 
-  const filteredVehicles = mockVehicles.filter(v =>
+  const getDriverName = (driverId: string | null) => {
+    if (!driverId) return undefined;
+    const driver = drivers.find(d => d.id === driverId);
+    return driver?.name;
+  };
+
+  const vehiclesWithLocation = vehicles.filter(v => v.lat && v.lng);
+
+  const filteredVehicles = vehiclesWithLocation.filter(v =>
     v.plate.toLowerCase().includes(search.toLowerCase()) ||
-    v.driver?.toLowerCase().includes(search.toLowerCase())
+    getDriverName(v.driverId)?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const selected = mockVehicles.find(v => v.id === selectedVehicle);
+  const selected = vehicles.find(v => v.id === selectedVehicle);
+
+  if (vehiclesLoading) {
+    return (
+      <div className="h-full flex relative">
+        <div className="w-80 border-r bg-background flex flex-col">
+          <div className="p-4 border-b">
+            <Skeleton className="h-8 w-full" />
+          </div>
+          <div className="p-4 space-y-3">
+            {[1, 2, 3, 4, 5].map(i => (
+              <Skeleton key={i} className="h-20 w-full" />
+            ))}
+          </div>
+        </div>
+        <div className="flex-1">
+          <Skeleton className="h-full w-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex relative">
@@ -57,29 +88,37 @@ export default function LiveMap() {
           </div>
           <ScrollArea className="flex-1">
             <div className="p-4 space-y-3">
-              {filteredVehicles.map(vehicle => (
-                <div
-                  key={vehicle.id}
-                  className={`p-3 rounded-md cursor-pointer hover-elevate ${
-                    selectedVehicle === vehicle.id ? "bg-accent" : "bg-card"
-                  }`}
-                  onClick={() => setSelectedVehicle(vehicle.id)}
-                  data-testid={`map-vehicle-item-${vehicle.id}`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-sm font-semibold">{vehicle.plate}</span>
-                    <span className={`h-2 w-2 rounded-full ${
-                      vehicle.status === "active" ? "bg-green-500" :
-                      vehicle.status === "idle" ? "bg-amber-500" :
-                      vehicle.status === "maintenance" ? "bg-blue-500" : "bg-red-500"
-                    }`} />
+              {filteredVehicles.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Nenhum veículo com localização disponível
+                </p>
+              ) : (
+                filteredVehicles.map(vehicle => (
+                  <div
+                    key={vehicle.id}
+                    className={`p-3 rounded-md cursor-pointer hover-elevate ${
+                      selectedVehicle === vehicle.id ? "bg-accent" : "bg-card"
+                    }`}
+                    onClick={() => setSelectedVehicle(vehicle.id)}
+                    data-testid={`map-vehicle-item-${vehicle.id}`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-sm font-semibold">{vehicle.plate}</span>
+                      <span className={`h-2 w-2 rounded-full ${
+                        vehicle.status === "active" ? "bg-green-500" :
+                        vehicle.status === "idle" ? "bg-amber-500" :
+                        vehicle.status === "maintenance" ? "bg-blue-500" : "bg-red-500"
+                      }`} />
+                    </div>
+                    {vehicle.driverId && (
+                      <p className="text-xs text-muted-foreground mt-1">{getDriverName(vehicle.driverId)}</p>
+                    )}
+                    {vehicle.location && (
+                      <p className="text-xs text-muted-foreground truncate">{vehicle.location}</p>
+                    )}
                   </div>
-                  {vehicle.driver && (
-                    <p className="text-xs text-muted-foreground mt-1">{vehicle.driver}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground truncate">{vehicle.location}</p>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </ScrollArea>
         </div>
@@ -99,13 +138,13 @@ export default function LiveMap() {
         )}
 
         <FleetMap
-          vehicles={mockVehicles.map(v => ({
+          vehicles={vehiclesWithLocation.map(v => ({
             id: v.id,
             plate: v.plate,
-            lat: v.lat,
-            lng: v.lng,
-            status: v.status,
-            driver: v.driver,
+            lat: v.lat!,
+            lng: v.lng!,
+            status: v.status as VehicleStatus,
+            driver: getDriverName(v.driverId),
           }))}
           selectedVehicleId={selectedVehicle}
           onVehicleClick={setSelectedVehicle}
@@ -125,7 +164,16 @@ export default function LiveMap() {
             </CardHeader>
             <CardContent>
               <VehicleCard
-                {...selected}
+                id={selected.id}
+                plate={selected.plate}
+                make={selected.make}
+                model={selected.model}
+                year={selected.year}
+                status={selected.status as VehicleStatus}
+                driver={getDriverName(selected.driverId)}
+                location={selected.location || undefined}
+                fuelLevel={selected.fuelLevel || undefined}
+                odometer={selected.odometer || undefined}
                 onView={() => console.log("View", selected.id)}
                 onEdit={() => console.log("Edit", selected.id)}
                 onAssignDriver={() => console.log("Assign", selected.id)}
