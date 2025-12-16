@@ -26,17 +26,17 @@ import {
 import { Button } from "@/components/ui/button";
 
 const mainNavItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Vehicles", url: "/vehicles", icon: Truck },
-  { title: "Drivers", url: "/drivers", icon: Users },
-  { title: "Live Map", url: "/map", icon: Map },
-  { title: "Maintenance", url: "/maintenance", icon: Wrench },
-  { title: "Trip Logs", url: "/trips", icon: ClipboardList },
-  { title: "Alerts", url: "/alerts", icon: Bell },
+  { title: "Painel", url: "/", icon: LayoutDashboard },
+  { title: "Veículos", url: "/vehicles", icon: Truck },
+  { title: "Motoristas", url: "/drivers", icon: Users },
+  { title: "Mapa ao Vivo", url: "/map", icon: Map },
+  { title: "Manutenção", url: "/maintenance", icon: Wrench },
+  { title: "Registro de Viagens", url: "/trips", icon: ClipboardList },
+  { title: "Alertas", url: "/alerts", icon: Bell },
 ];
 
 const bottomNavItems = [
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Configurações", url: "/settings", icon: Settings },
 ];
 
 interface AppSidebarProps {
@@ -60,13 +60,13 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
           </div>
           <div>
             <h1 className="font-semibold text-lg">FleetTrack</h1>
-            <p className="text-xs text-muted-foreground">Fleet Management</p>
+            <p className="text-xs text-muted-foreground">Gestão de Frotas</p>
           </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Navegação</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavItems.map((item) => (
@@ -87,7 +87,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel>System</SidebarGroupLabel>
+          <SidebarGroupLabel>Sistema</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {bottomNavItems.map((item) => (
@@ -132,7 +132,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
           </div>
         ) : (
           <Button className="w-full" data-testid="button-login">
-            Sign In
+            Entrar
           </Button>
         )}
       </SidebarFooter>

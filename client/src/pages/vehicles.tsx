@@ -24,7 +24,7 @@ import { Plus, Search, Filter } from "lucide-react";
 
 // todo: remove mock functionality
 const mockVehicles = [
-  { id: "v1", plate: "ABC-1234", make: "Ford", model: "Transit", year: 2022, status: "active" as VehicleStatus, driver: "John Smith", location: "Av. Paulista, 1000", fuelLevel: 75, odometer: 45230 },
+  { id: "v1", plate: "ABC-1234", make: "Ford", model: "Transit", year: 2022, status: "active" as VehicleStatus, driver: "João Silva", location: "Av. Paulista, 1000", fuelLevel: 75, odometer: 45230 },
   { id: "v2", plate: "XYZ-5678", make: "Mercedes", model: "Sprinter", year: 2021, status: "idle" as VehicleStatus, driver: "Maria Santos", location: "Rua Augusta, 500", fuelLevel: 42, odometer: 78500 },
   { id: "v3", plate: "DEF-9012", make: "Volkswagen", model: "Delivery", year: 2020, status: "maintenance" as VehicleStatus, location: "Oficina Central", fuelLevel: 90, odometer: 120000 },
   { id: "v4", plate: "GHI-3456", make: "Fiat", model: "Ducato", year: 2023, status: "alert" as VehicleStatus, driver: "Carlos Oliveira", location: "BR-116 km 45", fuelLevel: 12, odometer: 15000 },
@@ -61,7 +61,7 @@ export default function Vehicles() {
       status: "idle" as VehicleStatus,
       fuelLevel: 100,
       odometer: 0,
-      location: "Not assigned",
+      location: "Não atribuído",
     }]);
     setNewVehicle({ plate: "", make: "", model: "", year: new Date().getFullYear() });
     setIsAddDialogOpen(false);
@@ -80,26 +80,26 @@ export default function Vehicles() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold">Vehicles</h1>
-          <p className="text-muted-foreground">Manage your fleet vehicles</p>
+          <h1 className="text-2xl font-semibold">Veículos</h1>
+          <p className="text-muted-foreground">Gerencie os veículos da sua frota</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button data-testid="button-add-vehicle">
               <Plus className="h-4 w-4 mr-2" />
-              Add Vehicle
+              Adicionar Veículo
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Vehicle</DialogTitle>
+              <DialogTitle>Adicionar Novo Veículo</DialogTitle>
               <DialogDescription>
-                Enter the vehicle details to add it to your fleet.
+                Insira os dados do veículo para adicioná-lo à sua frota.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="plate">License Plate</Label>
+                <Label htmlFor="plate">Placa</Label>
                 <Input
                   id="plate"
                   placeholder="ABC-1234"
@@ -110,7 +110,7 @@ export default function Vehicles() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="make">Make</Label>
+                  <Label htmlFor="make">Marca</Label>
                   <Input
                     id="make"
                     placeholder="Ford"
@@ -120,7 +120,7 @@ export default function Vehicles() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="model">Model</Label>
+                  <Label htmlFor="model">Modelo</Label>
                   <Input
                     id="model"
                     placeholder="Transit"
@@ -131,7 +131,7 @@ export default function Vehicles() {
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="year">Year</Label>
+                <Label htmlFor="year">Ano</Label>
                 <Input
                   id="year"
                   type="number"
@@ -142,8 +142,8 @@ export default function Vehicles() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleAddVehicle} data-testid="button-confirm-add">Add Vehicle</Button>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleAddVehicle} data-testid="button-confirm-add">Adicionar Veículo</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -153,7 +153,7 @@ export default function Vehicles() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search vehicles..."
+            placeholder="Buscar veículos..."
             className="pl-9"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -163,14 +163,14 @@ export default function Vehicles() {
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as VehicleStatus | "all")}>
           <SelectTrigger className="w-full sm:w-48" data-testid="select-status-filter">
             <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Filter by status" />
+            <SelectValue placeholder="Filtrar por status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All ({statusCounts.all})</SelectItem>
-            <SelectItem value="active">Active ({statusCounts.active})</SelectItem>
-            <SelectItem value="idle">Idle ({statusCounts.idle})</SelectItem>
-            <SelectItem value="maintenance">Maintenance ({statusCounts.maintenance})</SelectItem>
-            <SelectItem value="alert">Alert ({statusCounts.alert})</SelectItem>
+            <SelectItem value="all">Todos ({statusCounts.all})</SelectItem>
+            <SelectItem value="active">Ativo ({statusCounts.active})</SelectItem>
+            <SelectItem value="idle">Parado ({statusCounts.idle})</SelectItem>
+            <SelectItem value="maintenance">Manutenção ({statusCounts.maintenance})</SelectItem>
+            <SelectItem value="alert">Alerta ({statusCounts.alert})</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -181,7 +181,7 @@ export default function Vehicles() {
           size="sm"
           onClick={() => setStatusFilter("all")}
         >
-          All ({statusCounts.all})
+          Todos ({statusCounts.all})
         </Button>
         {(["active", "idle", "maintenance", "alert"] as VehicleStatus[]).map(status => (
           <Button
@@ -211,7 +211,7 @@ export default function Vehicles() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No vehicles found matching your criteria.</p>
+          <p className="text-muted-foreground">Nenhum veículo encontrado com os critérios informados.</p>
         </div>
       )}
     </div>

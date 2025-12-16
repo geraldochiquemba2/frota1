@@ -59,16 +59,16 @@ export function VehicleCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onView} data-testid={`menu-item-view-${id}`}>View Details</DropdownMenuItem>
-            <DropdownMenuItem onClick={onEdit} data-testid={`menu-item-edit-${id}`}>Edit Vehicle</DropdownMenuItem>
-            <DropdownMenuItem onClick={onAssignDriver} data-testid={`menu-item-assign-${id}`}>Assign Driver</DropdownMenuItem>
+            <DropdownMenuItem onClick={onView} data-testid={`menu-item-view-${id}`}>Ver Detalhes</DropdownMenuItem>
+            <DropdownMenuItem onClick={onEdit} data-testid={`menu-item-edit-${id}`}>Editar Veículo</DropdownMenuItem>
+            <DropdownMenuItem onClick={onAssignDriver} data-testid={`menu-item-assign-${id}`}>Atribuir Motorista</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
       <CardContent className="space-y-3">
         {driver && (
           <div className="text-sm">
-            <span className="text-muted-foreground">Driver:</span>{" "}
+            <span className="text-muted-foreground">Motorista:</span>{" "}
             <span className="font-medium">{driver}</span>
           </div>
         )}

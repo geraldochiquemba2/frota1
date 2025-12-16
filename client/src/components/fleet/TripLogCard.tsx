@@ -48,7 +48,7 @@ export function TripLogCard({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
             </span>
-            In Progress
+            Em Andamento
           </div>
         )}
       </CardHeader>
@@ -62,11 +62,11 @@ export function TripLogCard({
             </div>
             <div className="flex-1 space-y-2">
               <div>
-                <p className="text-xs text-muted-foreground">Start</p>
+                <p className="text-xs text-muted-foreground">Partida</p>
                 <p className="text-sm">{startLocation}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">End</p>
+                <p className="text-xs text-muted-foreground">Destino</p>
                 <p className="text-sm">{endLocation || "—"}</p>
               </div>
             </div>
@@ -75,11 +75,11 @@ export function TripLogCard({
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
-            <span>{new Date(startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+            <span>{new Date(startTime).toLocaleTimeString('pt-BR', { hour: "2-digit", minute: "2-digit" })}</span>
             {endTime && (
               <>
                 <span>-</span>
-                <span>{new Date(endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                <span>{new Date(endTime).toLocaleTimeString('pt-BR', { hour: "2-digit", minute: "2-digit" })}</span>
               </>
             )}
           </div>
@@ -92,7 +92,7 @@ export function TripLogCard({
         </div>
         {purpose && (
           <p className="text-sm text-muted-foreground">
-            <span className="font-medium">Purpose:</span> {purpose}
+            <span className="font-medium">Finalidade:</span> {purpose}
           </p>
         )}
       </CardContent>

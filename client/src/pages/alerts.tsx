@@ -7,14 +7,14 @@ import { Search, Bell, CheckCheck } from "lucide-react";
 
 // todo: remove mock functionality
 const mockAlerts = [
-  { id: "a1", type: "fuel" as AlertType, title: "Low Fuel Warning", description: "Vehicle GHI-3456 fuel level below 15%", timestamp: "10 minutes ago" },
-  { id: "a2", type: "document" as AlertType, title: "License Expiring", description: "Driver Maria Santos license expires in 15 days", timestamp: "1 hour ago" },
-  { id: "a3", type: "maintenance" as AlertType, title: "Maintenance Overdue", description: "Vehicle ABC-1234 is overdue for oil change by 500km", timestamp: "2 hours ago" },
-  { id: "a4", type: "speed" as AlertType, title: "Speed Violation", description: "Vehicle XYZ-5678 exceeded speed limit on BR-116", timestamp: "3 hours ago" },
-  { id: "a5", type: "document" as AlertType, title: "Insurance Expiring", description: "Vehicle DEF-9012 insurance expires in 7 days", timestamp: "5 hours ago" },
-  { id: "a6", type: "maintenance" as AlertType, title: "Tire Pressure Low", description: "Vehicle JKL-7890 rear left tire pressure is low", timestamp: "6 hours ago" },
-  { id: "a7", type: "fuel" as AlertType, title: "Unusual Fuel Consumption", description: "Vehicle MNO-2345 showing 30% higher fuel consumption than average", timestamp: "1 day ago" },
-  { id: "a8", type: "speed" as AlertType, title: "Hard Braking Detected", description: "Vehicle ABC-1234 had 3 hard braking events today", timestamp: "1 day ago" },
+  { id: "a1", type: "fuel" as AlertType, title: "Alerta de Combustível Baixo", description: "Veículo GHI-3456 com nível de combustível abaixo de 15%", timestamp: "10 minutos atrás" },
+  { id: "a2", type: "document" as AlertType, title: "CNH Expirando", description: "CNH da motorista Maria Santos expira em 15 dias", timestamp: "1 hora atrás" },
+  { id: "a3", type: "maintenance" as AlertType, title: "Manutenção Atrasada", description: "Veículo ABC-1234 está atrasado para troca de óleo em 500km", timestamp: "2 horas atrás" },
+  { id: "a4", type: "speed" as AlertType, title: "Excesso de Velocidade", description: "Veículo XYZ-5678 ultrapassou limite de velocidade na BR-116", timestamp: "3 horas atrás" },
+  { id: "a5", type: "document" as AlertType, title: "Seguro Expirando", description: "Seguro do veículo DEF-9012 expira em 7 dias", timestamp: "5 horas atrás" },
+  { id: "a6", type: "maintenance" as AlertType, title: "Pressão de Pneu Baixa", description: "Veículo JKL-7890 com pressão baixa no pneu traseiro esquerdo", timestamp: "6 horas atrás" },
+  { id: "a7", type: "fuel" as AlertType, title: "Consumo de Combustível Anormal", description: "Veículo MNO-2345 apresentando consumo 30% acima da média", timestamp: "1 dia atrás" },
+  { id: "a8", type: "speed" as AlertType, title: "Frenagem Brusca Detectada", description: "Veículo ABC-1234 teve 3 eventos de frenagem brusca hoje", timestamp: "1 dia atrás" },
 ];
 
 export default function Alerts() {
@@ -51,13 +51,13 @@ export default function Alerts() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold">Alerts</h1>
-          <p className="text-muted-foreground">Monitor and manage fleet alerts</p>
+          <h1 className="text-2xl font-semibold">Alertas</h1>
+          <p className="text-muted-foreground">Monitore e gerencie os alertas da frota</p>
         </div>
         {alerts.length > 0 && (
           <Button variant="outline" onClick={handleDismissAll} data-testid="button-dismiss-all">
             <CheckCheck className="h-4 w-4 mr-2" />
-            Dismiss All
+            Dispensar Todos
           </Button>
         )}
       </div>
@@ -66,7 +66,7 @@ export default function Alerts() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search alerts..."
+            placeholder="Buscar alertas..."
             className="pl-9"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -81,35 +81,35 @@ export default function Alerts() {
           size="sm"
           onClick={() => setTypeFilter("all")}
         >
-          All ({typeCounts.all})
+          Todos ({typeCounts.all})
         </Button>
         <Button
           variant={typeFilter === "maintenance" ? "default" : "outline"}
           size="sm"
           onClick={() => setTypeFilter("maintenance")}
         >
-          Maintenance ({typeCounts.maintenance})
+          Manutenção ({typeCounts.maintenance})
         </Button>
         <Button
           variant={typeFilter === "document" ? "default" : "outline"}
           size="sm"
           onClick={() => setTypeFilter("document")}
         >
-          Documents ({typeCounts.document})
+          Documentos ({typeCounts.document})
         </Button>
         <Button
           variant={typeFilter === "fuel" ? "default" : "outline"}
           size="sm"
           onClick={() => setTypeFilter("fuel")}
         >
-          Fuel ({typeCounts.fuel})
+          Combustível ({typeCounts.fuel})
         </Button>
         <Button
           variant={typeFilter === "speed" ? "default" : "outline"}
           size="sm"
           onClick={() => setTypeFilter("speed")}
         >
-          Speed ({typeCounts.speed})
+          Velocidade ({typeCounts.speed})
         </Button>
       </div>
 
@@ -118,7 +118,7 @@ export default function Alerts() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              Active Alerts ({filteredAlerts.length})
+              Alertas Ativos ({filteredAlerts.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -136,7 +136,7 @@ export default function Alerts() {
         <div className="text-center py-12">
           <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground">
-            {alerts.length === 0 ? "No active alerts. Your fleet is running smoothly!" : "No alerts match your search."}
+            {alerts.length === 0 ? "Nenhum alerta ativo. Sua frota está funcionando bem!" : "Nenhum alerta corresponde à sua busca."}
           </p>
         </div>
       )}

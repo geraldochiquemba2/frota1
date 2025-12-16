@@ -10,7 +10,7 @@ import type { VehicleStatus } from "@/components/fleet/StatusBadge";
 
 // todo: remove mock functionality
 const mockVehicles = [
-  { id: "v1", plate: "ABC-1234", make: "Ford", model: "Transit", year: 2022, status: "active" as VehicleStatus, driver: "John Smith", location: "Av. Paulista, 1000", fuelLevel: 75, odometer: 45230, lat: -23.5505, lng: -46.6333 },
+  { id: "v1", plate: "ABC-1234", make: "Ford", model: "Transit", year: 2022, status: "active" as VehicleStatus, driver: "João Silva", location: "Av. Paulista, 1000", fuelLevel: 75, odometer: 45230, lat: -23.5505, lng: -46.6333 },
   { id: "v2", plate: "XYZ-5678", make: "Mercedes", model: "Sprinter", year: 2021, status: "idle" as VehicleStatus, driver: "Maria Santos", location: "Rua Augusta, 500", fuelLevel: 42, odometer: 78500, lat: -23.5705, lng: -46.6533 },
   { id: "v3", plate: "DEF-9012", make: "Volkswagen", model: "Delivery", year: 2020, status: "maintenance" as VehicleStatus, location: "Oficina Central", fuelLevel: 90, odometer: 120000, lat: -23.5305, lng: -46.6133 },
   { id: "v4", plate: "GHI-3456", make: "Fiat", model: "Ducato", year: 2023, status: "alert" as VehicleStatus, driver: "Carlos Oliveira", location: "BR-116 km 45", fuelLevel: 12, odometer: 15000, lat: -23.5905, lng: -46.6733 },
@@ -35,7 +35,7 @@ export default function LiveMap() {
         <div className="w-80 border-r bg-background flex flex-col">
           <div className="p-4 border-b">
             <div className="flex items-center justify-between gap-2 mb-3">
-              <h2 className="font-semibold">Vehicles</h2>
+              <h2 className="font-semibold">Veículos</h2>
               <Button
                 variant="ghost"
                 size="icon"
@@ -47,7 +47,7 @@ export default function LiveMap() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search..."
+                placeholder="Buscar..."
                 className="pl-9"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -94,7 +94,7 @@ export default function LiveMap() {
             onClick={() => setShowSidebar(true)}
           >
             <List className="h-4 w-4 mr-2" />
-            Show List
+            Mostrar Lista
           </Button>
         )}
 

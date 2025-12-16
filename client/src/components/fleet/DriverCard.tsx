@@ -16,9 +16,9 @@ interface DriverCardProps {
 }
 
 const statusLabels = {
-  "available": { label: "Available", className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
-  "on-trip": { label: "On Trip", className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
-  "off-duty": { label: "Off Duty", className: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400" },
+  "available": { label: "Disponível", className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+  "on-trip": { label: "Em Viagem", className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  "off-duty": { label: "Folga", className: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400" },
 };
 
 export function DriverCard({
@@ -62,7 +62,7 @@ export function DriverCard({
             </Badge>
           </div>
           {assignedVehicle && (
-            <p className="text-sm text-muted-foreground">Vehicle: {assignedVehicle}</p>
+            <p className="text-sm text-muted-foreground">Veículo: {assignedVehicle}</p>
           )}
         </div>
       </CardHeader>
@@ -77,7 +77,7 @@ export function DriverCard({
         </div>
         <div className={`flex items-center gap-2 text-sm ${isLicenseExpiringSoon ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
           <FileText className="h-3.5 w-3.5" />
-          <span>License expires: {new Date(licenseExpiry).toLocaleDateString()}</span>
+          <span>CNH expira: {new Date(licenseExpiry).toLocaleDateString('pt-BR')}</span>
           {isLicenseExpiringSoon && <Clock className="h-3.5 w-3.5" />}
         </div>
       </CardContent>

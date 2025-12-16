@@ -23,22 +23,22 @@ import { Plus, Search, ClipboardList } from "lucide-react";
 
 // todo: remove mock functionality
 const mockTrips = [
-  { id: "t1", vehiclePlate: "ABC-1234", driverName: "John Smith", startLocation: "Warehouse Central, SP", endLocation: "", startTime: "2024-12-16T08:30:00", purpose: "Delivery" },
-  { id: "t2", vehiclePlate: "XYZ-5678", driverName: "Maria Santos", startLocation: "Office HQ, SP", endLocation: "Client Site, Campinas", startTime: "2024-12-16T07:00:00", endTime: "2024-12-16T09:45:00", distance: 85, purpose: "Client Meeting" },
-  { id: "t3", vehiclePlate: "DEF-9012", driverName: "Carlos Oliveira", startLocation: "Distribution Center", endLocation: "Store #15, Guarulhos", startTime: "2024-12-16T06:00:00", endTime: "2024-12-16T08:30:00", distance: 42, purpose: "Stock Replenishment" },
-  { id: "t4", vehiclePlate: "GHI-3456", driverName: "Ana Silva", startLocation: "Main Office", endLocation: "Airport, GRU", startTime: "2024-12-15T14:00:00", endTime: "2024-12-15T15:30:00", distance: 28, purpose: "Airport Transfer" },
-  { id: "t5", vehiclePlate: "JKL-7890", driverName: "Pedro Costa", startLocation: "Factory A", endLocation: "Factory B", startTime: "2024-12-15T10:00:00", endTime: "2024-12-15T11:15:00", distance: 35, purpose: "Parts Transfer" },
+  { id: "t1", vehiclePlate: "ABC-1234", driverName: "João Silva", startLocation: "Armazém Central, SP", endLocation: "", startTime: "2024-12-16T08:30:00", purpose: "Entrega" },
+  { id: "t2", vehiclePlate: "XYZ-5678", driverName: "Maria Santos", startLocation: "Escritório Central, SP", endLocation: "Cliente, Campinas", startTime: "2024-12-16T07:00:00", endTime: "2024-12-16T09:45:00", distance: 85, purpose: "Reunião com Cliente" },
+  { id: "t3", vehiclePlate: "DEF-9012", driverName: "Carlos Oliveira", startLocation: "Centro de Distribuição", endLocation: "Loja #15, Guarulhos", startTime: "2024-12-16T06:00:00", endTime: "2024-12-16T08:30:00", distance: 42, purpose: "Reposição de Estoque" },
+  { id: "t4", vehiclePlate: "GHI-3456", driverName: "Ana Silva", startLocation: "Escritório Principal", endLocation: "Aeroporto, GRU", startTime: "2024-12-15T14:00:00", endTime: "2024-12-15T15:30:00", distance: 28, purpose: "Transfer Aeroporto" },
+  { id: "t5", vehiclePlate: "JKL-7890", driverName: "Pedro Costa", startLocation: "Fábrica A", endLocation: "Fábrica B", startTime: "2024-12-15T10:00:00", endTime: "2024-12-15T11:15:00", distance: 35, purpose: "Transferência de Peças" },
 ];
 
 const purposes = [
-  "Delivery",
-  "Client Meeting",
-  "Stock Replenishment",
-  "Airport Transfer",
-  "Parts Transfer",
-  "Service Call",
-  "Personal",
-  "Other",
+  "Entrega",
+  "Reunião com Cliente",
+  "Reposição de Estoque",
+  "Transfer Aeroporto",
+  "Transferência de Peças",
+  "Chamado de Serviço",
+  "Pessoal",
+  "Outro",
 ];
 
 export default function Trips() {
@@ -83,30 +83,36 @@ export default function Trips() {
     completed: trips.filter(t => t.endTime).length,
   };
 
+  const filterLabels = {
+    all: "Todas",
+    ongoing: "Em Andamento",
+    completed: "Concluídas",
+  };
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold">Trip Logs</h1>
-          <p className="text-muted-foreground">Track and log vehicle trips</p>
+          <h1 className="text-2xl font-semibold">Registro de Viagens</h1>
+          <p className="text-muted-foreground">Acompanhe e registre as viagens dos veículos</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button data-testid="button-start-trip">
               <Plus className="h-4 w-4 mr-2" />
-              Start Trip
+              Iniciar Viagem
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Start New Trip</DialogTitle>
+              <DialogTitle>Iniciar Nova Viagem</DialogTitle>
               <DialogDescription>
-                Log the start of a new trip.
+                Registre o início de uma nova viagem.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="vehiclePlate">Vehicle Plate</Label>
+                <Label htmlFor="vehiclePlate">Placa do Veículo</Label>
                 <Input
                   id="vehiclePlate"
                   placeholder="ABC-1234"
@@ -116,33 +122,33 @@ export default function Trips() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="driverName">Driver Name</Label>
+                <Label htmlFor="driverName">Nome do Motorista</Label>
                 <Input
                   id="driverName"
-                  placeholder="John Smith"
+                  placeholder="João Silva"
                   value={newTrip.driverName}
                   onChange={(e) => setNewTrip({ ...newTrip, driverName: e.target.value })}
                   data-testid="input-trip-driver"
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="startLocation">Start Location</Label>
+                <Label htmlFor="startLocation">Local de Partida</Label>
                 <Input
                   id="startLocation"
-                  placeholder="Warehouse Central"
+                  placeholder="Armazém Central"
                   value={newTrip.startLocation}
                   onChange={(e) => setNewTrip({ ...newTrip, startLocation: e.target.value })}
                   data-testid="input-trip-start"
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="purpose">Purpose</Label>
+                <Label htmlFor="purpose">Finalidade</Label>
                 <Select
                   value={newTrip.purpose}
                   onValueChange={(v) => setNewTrip({ ...newTrip, purpose: v })}
                 >
                   <SelectTrigger data-testid="select-trip-purpose">
-                    <SelectValue placeholder="Select purpose" />
+                    <SelectValue placeholder="Selecione a finalidade" />
                   </SelectTrigger>
                   <SelectContent>
                     {purposes.map(purpose => (
@@ -153,8 +159,8 @@ export default function Trips() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleStartTrip} data-testid="button-confirm-trip">Start Trip</Button>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleStartTrip} data-testid="button-confirm-trip">Iniciar Viagem</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -164,7 +170,7 @@ export default function Trips() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search trips..."
+            placeholder="Buscar viagens..."
             className="pl-9"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -181,7 +187,7 @@ export default function Trips() {
             size="sm"
             onClick={() => setFilter(f)}
           >
-            {f.charAt(0).toUpperCase() + f.slice(1)} ({tripCounts[f]})
+            {filterLabels[f]} ({tripCounts[f]})
           </Button>
         ))}
       </div>
@@ -199,7 +205,7 @@ export default function Trips() {
       ) : (
         <div className="text-center py-12">
           <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">No trips found.</p>
+          <p className="text-muted-foreground">Nenhuma viagem encontrada.</p>
         </div>
       )}
     </div>

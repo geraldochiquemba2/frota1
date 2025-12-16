@@ -29,7 +29,7 @@ export function MetricCard({ title, value, trend, icon: Icon, onClick }: MetricC
         {trend && (
           <div className={`flex items-center gap-1 text-xs mt-1 ${trend.isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
             {trend.isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-            <span>{trend.value}% from last week</span>
+            <span>{trend.value}% em relação à semana passada</span>
           </div>
         )}
       </CardContent>
