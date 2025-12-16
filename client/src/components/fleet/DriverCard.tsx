@@ -38,7 +38,8 @@ export function DriverCard({
     .join("")
     .toUpperCase();
 
-  const isLicenseExpiringSoon = new Date(licenseExpiry) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const hasValidLicenseExpiry = licenseExpiry && licenseExpiry !== "" && new Date(licenseExpiry).getFullYear() > 1970;
+  const isLicenseExpiringSoon = hasValidLicenseExpiry && new Date(licenseExpiry) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   return (
     <Card
@@ -75,11 +76,13 @@ export function DriverCard({
           <Mail className="h-3.5 w-3.5" />
           <span className="truncate">{email}</span>
         </div>
-        <div className={`flex items-center gap-2 text-sm ${isLicenseExpiringSoon ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
-          <FileText className="h-3.5 w-3.5" />
-          <span>CNH expira: {new Date(licenseExpiry).toLocaleDateString('pt-BR')}</span>
-          {isLicenseExpiringSoon && <Clock className="h-3.5 w-3.5" />}
-        </div>
+        {hasValidLicenseExpiry && (
+          <div className={`flex items-center gap-2 text-sm ${isLicenseExpiringSoon ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
+            <FileText className="h-3.5 w-3.5" />
+            <span>Carta expira: {new Date(licenseExpiry).toLocaleDateString('pt-BR')}</span>
+            {isLicenseExpiringSoon && <Clock className="h-3.5 w-3.5" />}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

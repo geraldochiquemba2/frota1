@@ -33,7 +33,7 @@ export function FleetMap({ vehicles, onVehicleClick, selectedVehicleId, classNam
   useEffect(() => {
     if (!mapRef.current || leafletMapRef.current) return;
 
-    leafletMapRef.current = L.map(mapRef.current).setView([-23.5505, -46.6333], 11);
+    leafletMapRef.current = L.map(mapRef.current).setView([-8.8390, 13.2894], 12);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
