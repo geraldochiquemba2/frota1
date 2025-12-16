@@ -35,6 +35,8 @@ export interface IStorage {
   // Trips
   getTrips(): Promise<Trip[]>;
   getTrip(id: string): Promise<Trip | undefined>;
+  getTripsByDriver(driverId: string): Promise<Trip[]>;
+  getActiveTripByDriver(driverId: string): Promise<Trip | undefined>;
   createTrip(trip: InsertTrip): Promise<Trip>;
   updateTrip(id: string, trip: Partial<Trip>): Promise<Trip | undefined>;
 
@@ -47,6 +49,7 @@ export interface IStorage {
   // Alerts
   getAlerts(): Promise<Alert[]>;
   getAlert(id: string): Promise<Alert | undefined>;
+  getAlertsByDriver(driverId: string): Promise<Alert[]>;
   createAlert(alert: InsertAlert): Promise<Alert>;
   dismissAlert(id: string): Promise<boolean>;
   dismissAllAlerts(): Promise<boolean>;
@@ -153,6 +156,15 @@ export class DatabaseStorage implements IStorage {
     return trip;
   }
 
+  async getTripsByDriver(driverId: string): Promise<Trip[]> {
+    return db.select().from(trips).where(eq(trips.driverId, driverId)).orderBy(desc(trips.startTime));
+  }
+
+  async getActiveTripByDriver(driverId: string): Promise<Trip | undefined> {
+    const [trip] = await db.select().from(trips).where(and(eq(trips.driverId, driverId), eq(trips.status, "active")));
+    return trip;
+  }
+
   async createTrip(trip: InsertTrip): Promise<Trip> {
     const [newTrip] = await db.insert(trips).values(trip).returning();
     return newTrip;
@@ -191,6 +203,10 @@ export class DatabaseStorage implements IStorage {
   async getAlert(id: string): Promise<Alert | undefined> {
     const [alert] = await db.select().from(alerts).where(eq(alerts.id, id));
     return alert;
+  }
+
+  async getAlertsByDriver(driverId: string): Promise<Alert[]> {
+    return db.select().from(alerts).where(and(eq(alerts.driverId, driverId), eq(alerts.dismissed, false))).orderBy(desc(alerts.timestamp));
   }
 
   async createAlert(alert: InsertAlert): Promise<Alert> {

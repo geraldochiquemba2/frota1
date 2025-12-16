@@ -274,5 +274,207 @@ export async function registerRoutes(
     }
   });
 
+  // ==================== DRIVER ROUTES ====================
+  
+  // Get driver profile (self)
+  app.get("/api/driver/profile", async (req: any, res) => {
+    try {
+      if (!req.session.userId || req.session.userType !== "driver") {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+      const driver = await storage.getDriver(req.session.userId);
+      if (!driver) {
+        return res.status(404).json({ error: "Motorista não encontrado" });
+      }
+      res.json(driver);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar perfil" });
+    }
+  });
+
+  // Get driver's trips
+  app.get("/api/driver/trips", async (req: any, res) => {
+    try {
+      if (!req.session.userId || req.session.userType !== "driver") {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+      const tripsList = await storage.getTripsByDriver(req.session.userId);
+      res.json(tripsList);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar viagens" });
+    }
+  });
+
+  // Get driver's active trip
+  app.get("/api/driver/trips/active", async (req: any, res) => {
+    try {
+      if (!req.session.userId || req.session.userType !== "driver") {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+      const trip = await storage.getActiveTripByDriver(req.session.userId);
+      res.json(trip || null);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar viagem ativa" });
+    }
+  });
+
+  // Start a new trip
+  app.post("/api/driver/trips/start", async (req: any, res) => {
+    try {
+      if (!req.session.userId || req.session.userType !== "driver") {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+      
+      // Check if there's already an active trip
+      const activeTrip = await storage.getActiveTripByDriver(req.session.userId);
+      if (activeTrip) {
+        return res.status(400).json({ error: "Você já tem uma viagem ativa" });
+      }
+      
+      const driver = await storage.getDriver(req.session.userId);
+      if (!driver) {
+        return res.status(404).json({ error: "Motorista não encontrado" });
+      }
+
+      // Get assigned vehicle
+      let vehicle = null;
+      if (driver.assignedVehicleId) {
+        vehicle = await storage.getVehicle(driver.assignedVehicleId);
+      }
+
+      const { startLocation, purpose, startOdometer } = req.body;
+      
+      const trip = await storage.createTrip({
+        vehicleId: vehicle?.id || "unassigned",
+        vehiclePlate: vehicle?.plate || "N/A",
+        driverId: driver.id,
+        driverName: driver.name,
+        startLocation: startLocation || driver.homeBase || "Localização não informada",
+        purpose: purpose || "Viagem de trabalho",
+        status: "active",
+        startOdometer: startOdometer || null,
+      });
+
+      // Update driver status
+      await storage.updateDriver(driver.id, { status: "on_trip" });
+
+      res.status(201).json(trip);
+    } catch (error) {
+      console.error("Error starting trip:", error);
+      res.status(500).json({ error: "Erro ao iniciar viagem" });
+    }
+  });
+
+  // Complete a trip
+  app.post("/api/driver/trips/:id/complete", async (req: any, res) => {
+    try {
+      if (!req.session.userId || req.session.userType !== "driver") {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+      
+      const trip = await storage.getTrip(req.params.id);
+      if (!trip || trip.driverId !== req.session.userId) {
+        return res.status(404).json({ error: "Viagem não encontrada" });
+      }
+
+      if (trip.status !== "active") {
+        return res.status(400).json({ error: "Esta viagem já foi finalizada" });
+      }
+
+      const { endLocation, endOdometer } = req.body;
+      
+      // Calculate distance if odometers provided
+      let distance = null;
+      if (trip.startOdometer && endOdometer) {
+        distance = endOdometer - trip.startOdometer;
+      }
+
+      const updatedTrip = await storage.updateTrip(trip.id, {
+        endLocation: endLocation || "Destino não informado",
+        endTime: new Date(),
+        status: "completed",
+        endOdometer: endOdometer || null,
+        distance: distance,
+      });
+
+      // Update driver status
+      await storage.updateDriver(req.session.userId, { status: "available" });
+
+      // Check mileage threshold and create alert if needed
+      const driver = await storage.getDriver(req.session.userId);
+      if (driver?.mileageAlertThreshold && driver.alertsEnabled && distance) {
+        if (distance >= driver.mileageAlertThreshold) {
+          await storage.createAlert({
+            type: "mileage",
+            title: "Limite de Quilometragem Atingido",
+            description: `O motorista ${driver.name} percorreu ${distance}km, ultrapassando o limite de ${driver.mileageAlertThreshold}km definido.`,
+            vehicleId: trip.vehicleId !== "unassigned" ? trip.vehicleId : null,
+            driverId: driver.id,
+          });
+        }
+      }
+
+      res.json(updatedTrip);
+    } catch (error) {
+      console.error("Error completing trip:", error);
+      res.status(500).json({ error: "Erro ao finalizar viagem" });
+    }
+  });
+
+  // Get driver's alerts
+  app.get("/api/driver/alerts", async (req: any, res) => {
+    try {
+      if (!req.session.userId || req.session.userType !== "driver") {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+      const alertsList = await storage.getAlertsByDriver(req.session.userId);
+      res.json(alertsList);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar alertas" });
+    }
+  });
+
+  // Dismiss driver's alert
+  app.patch("/api/driver/alerts/:id/dismiss", async (req: any, res) => {
+    try {
+      if (!req.session.userId || req.session.userType !== "driver") {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+      
+      const alert = await storage.getAlert(req.params.id);
+      if (!alert || alert.driverId !== req.session.userId) {
+        return res.status(404).json({ error: "Alerta não encontrado" });
+      }
+
+      const dismissed = await storage.dismissAlert(req.params.id);
+      res.json({ success: dismissed });
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao dispensar alerta" });
+    }
+  });
+
+  // Get assigned vehicle for driver
+  app.get("/api/driver/vehicle", async (req: any, res) => {
+    try {
+      if (!req.session.userId || req.session.userType !== "driver") {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+      
+      const driver = await storage.getDriver(req.session.userId);
+      if (!driver) {
+        return res.status(404).json({ error: "Motorista não encontrado" });
+      }
+
+      if (!driver.assignedVehicleId) {
+        return res.json(null);
+      }
+
+      const vehicle = await storage.getVehicle(driver.assignedVehicleId);
+      res.json(vehicle || null);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar veículo" });
+    }
+  });
+
   return httpServer;
 }
