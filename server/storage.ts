@@ -1,20 +1,21 @@
 import { 
-  type User, type InsertUser,
+  type AdminUser, type InsertAdminUser,
   type Vehicle, type InsertVehicle,
   type Driver, type InsertDriver,
   type Trip, type InsertTrip,
   type Maintenance, type InsertMaintenance,
   type Alert, type InsertAlert,
-  users, vehicles, drivers, trips, maintenance, alerts
+  adminUsers, vehicles, drivers, trips, maintenance, alerts
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, isNull } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
-  // Users
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // Admin Users
+  getAdminUser(id: string): Promise<AdminUser | undefined>;
+  getAdminUserByPhone(phone: string): Promise<AdminUser | undefined>;
+  createAdminUser(user: InsertAdminUser): Promise<AdminUser>;
+  ensureAdminExists(): Promise<void>;
 
   // Vehicles
   getVehicles(): Promise<Vehicle[]>;
@@ -59,20 +60,31 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // Users
-  async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+  // Admin Users
+  async getAdminUser(id: string): Promise<AdminUser | undefined> {
+    const [user] = await db.select().from(adminUsers).where(eq(adminUsers.id, id));
     return user;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+  async getAdminUserByPhone(phone: string): Promise<AdminUser | undefined> {
+    const [user] = await db.select().from(adminUsers).where(eq(adminUsers.phone, phone));
     return user;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+  async createAdminUser(insertUser: InsertAdminUser): Promise<AdminUser> {
+    const [user] = await db.insert(adminUsers).values(insertUser).returning();
     return user;
+  }
+
+  async ensureAdminExists(): Promise<void> {
+    const existingAdmin = await this.getAdminUserByPhone("912345678");
+    if (!existingAdmin) {
+      await this.createAdminUser({
+        phone: "912345678",
+        password: "123456789",
+        name: "Administrador",
+      });
+    }
   }
 
   // Vehicles

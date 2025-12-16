@@ -1,7 +1,12 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/fleet/ThemeToggle";
-import { Truck, MapPin, Bell, Wrench, Users, BarChart3 } from "lucide-react";
+import { Truck, MapPin, Bell, Wrench, Users, BarChart3, Phone, Lock } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 const features = [
   {
@@ -37,9 +42,114 @@ const features = [
 ];
 
 export default function Landing() {
-  const handleLogin = () => {
-    window.location.href = "/api/login";
+  const [showLogin, setShowLogin] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ phone, password }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Erro ao fazer login");
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
+      toast({
+        title: "Login realizado",
+        description: "Bem-vindo ao FleetTrack!",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro no login",
+        description: error instanceof Error ? error.message : "Credenciais inválidas",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  if (showLogin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                <Truck className="h-8 w-8" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl">FleetTrack</CardTitle>
+            <p className="text-muted-foreground">Entre com suas credenciais</p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Número de Telefone</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    type="text"
+                    placeholder="912345678"
+                    className="pl-10"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    data-testid="input-phone"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Sua senha"
+                    className="pl-10"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    data-testid="input-password"
+                  />
+                </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-login-submit">
+                {isLoading ? "Entrando..." : "Entrar"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => setShowLogin(false)}
+                data-testid="button-back"
+              >
+                Voltar
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -53,7 +163,7 @@ export default function Landing() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button onClick={handleLogin} data-testid="button-header-login">
+            <Button onClick={() => setShowLogin(true)} data-testid="button-header-login">
               Entrar
             </Button>
           </div>
@@ -70,7 +180,7 @@ export default function Landing() {
               Acompanhe seus veículos, motoristas e manutenções em um único lugar. 
               Tome decisões inteligentes com dados em tempo real.
             </p>
-            <Button size="lg" onClick={handleLogin} data-testid="button-hero-login">
+            <Button size="lg" onClick={() => setShowLogin(true)} data-testid="button-hero-login">
               Começar Agora
             </Button>
           </div>
@@ -109,7 +219,7 @@ export default function Landing() {
             <p className="text-muted-foreground mb-8">
               Entre agora e comece a gerenciar sua frota de forma eficiente.
             </p>
-            <Button size="lg" onClick={handleLogin} data-testid="button-cta-login">
+            <Button size="lg" onClick={() => setShowLogin(true)} data-testid="button-cta-login">
               Acessar Sistema
             </Button>
           </div>

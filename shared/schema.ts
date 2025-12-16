@@ -3,20 +3,20 @@ import { pgTable, text, varchar, integer, timestamp, real, boolean } from "drizz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table
-export const users = pgTable("users", {
+// Admin users table
+export const adminUsers = pgTable("admin_users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  phone: varchar("phone", { length: 20 }).notNull().unique(),
+  password: varchar("password", { length: 100 }).notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const insertAdminUserSchema = createInsertSchema(adminUsers).omit({
+  id: true,
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type InsertAdminUser = z.infer<typeof insertAdminUserSchema>;
+export type AdminUser = typeof adminUsers.$inferSelect;
 
 // Vehicles table
 export const vehicles = pgTable("vehicles", {

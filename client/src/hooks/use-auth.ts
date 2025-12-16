@@ -1,7 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import type { User } from "@shared/models/auth";
 
-async function fetchUser(): Promise<User | null> {
+interface AuthUser {
+  id: string;
+  phone: string;
+  name: string;
+}
+
+async function fetchUser(): Promise<AuthUser | null> {
   const response = await fetch("/api/auth/user", {
     credentials: "include",
   });
@@ -18,16 +23,17 @@ async function fetchUser(): Promise<User | null> {
 }
 
 export function useAuth() {
-  const { data: user, isLoading } = useQuery<User | null>({
+  const { data: user, isLoading, refetch } = useQuery<AuthUser | null>({
     queryKey: ["/api/auth/user"],
     queryFn: fetchUser,
     retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
   return {
     user,
     isLoading,
     isAuthenticated: !!user,
+    refetch,
   };
 }

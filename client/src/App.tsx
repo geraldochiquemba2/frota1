@@ -55,18 +55,21 @@ function AuthenticatedApp() {
     "--sidebar-width-icon": "3rem",
   };
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
-  const fullName = user ? 
-    [user.firstName, user.lastName].filter(Boolean).join(" ") || "Usuário" 
-    : "Usuário";
-
   const userData = user ? {
-    name: fullName,
-    email: user.email || "",
-    photo: user.profileImageUrl || undefined,
+    name: user.name || "Usuário",
+    email: user.phone || "",
   } : undefined;
 
   return (
