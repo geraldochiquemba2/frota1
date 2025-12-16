@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/fleet/ThemeToggle";
-import { Truck, MapPin, Bell, Wrench, Users, BarChart3, Phone, Lock } from "lucide-react";
+import { Truck, MapPin, Bell, Wrench, Users, BarChart3, Phone, Lock, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -43,8 +43,10 @@ const features = [
 
 export default function Landing() {
   const [showLogin, setShowLogin] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -81,6 +83,147 @@ export default function Landing() {
       setIsLoading(false);
     }
   };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ phone, password, name }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Erro ao criar conta");
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
+      toast({
+        title: "Conta criada",
+        description: "Bem-vindo ao FleetTrack!",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro no cadastro",
+        description: error instanceof Error ? error.message : "Erro ao criar conta",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (showRegister) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                <Truck className="h-8 w-8" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl">Criar Conta</CardTitle>
+            <p className="text-muted-foreground">Preencha seus dados para começar</p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome Completo</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Seu nome"
+                    className="pl-10"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    data-testid="input-register-name"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="register-phone">Número de Telefone</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="register-phone"
+                    type="text"
+                    placeholder="912345678"
+                    className="pl-10"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    data-testid="input-register-phone"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="register-password">Senha</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="register-password"
+                    type="password"
+                    placeholder="Crie uma senha"
+                    className="pl-10"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    data-testid="input-register-password"
+                  />
+                </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-register-submit">
+                {isLoading ? "Criando conta..." : "Cadastrar"}
+              </Button>
+              <div className="text-center text-sm text-muted-foreground">
+                Já tem uma conta?{" "}
+                <button
+                  type="button"
+                  className="text-primary hover:underline"
+                  onClick={() => {
+                    setShowRegister(false);
+                    setShowLogin(true);
+                    setName("");
+                    setPhone("");
+                    setPassword("");
+                  }}
+                  data-testid="link-go-to-login"
+                >
+                  Entre aqui
+                </button>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setShowRegister(false);
+                  setName("");
+                  setPhone("");
+                  setPassword("");
+                }}
+                data-testid="button-register-back"
+              >
+                Voltar
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (showLogin) {
     return (
@@ -135,6 +278,22 @@ export default function Landing() {
               <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-login-submit">
                 {isLoading ? "Entrando..." : "Entrar"}
               </Button>
+              <div className="text-center text-sm text-muted-foreground">
+                Não tem uma conta?{" "}
+                <button
+                  type="button"
+                  className="text-primary hover:underline"
+                  onClick={() => {
+                    setShowLogin(false);
+                    setShowRegister(true);
+                    setPhone("");
+                    setPassword("");
+                  }}
+                  data-testid="link-go-to-register"
+                >
+                  Cadastre-se
+                </button>
+              </div>
               <Button
                 type="button"
                 variant="ghost"
@@ -163,6 +322,9 @@ export default function Landing() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <Button variant="outline" onClick={() => setShowRegister(true)} data-testid="button-header-register">
+              Cadastrar
+            </Button>
             <Button onClick={() => setShowLogin(true)} data-testid="button-header-login">
               Entrar
             </Button>

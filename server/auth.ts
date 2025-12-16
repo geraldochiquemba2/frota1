@@ -26,6 +26,41 @@ export function setupAuth(app: Express): void {
   // Ensure admin user exists on startup
   storage.ensureAdminExists().catch(console.error);
 
+  // Register route
+  app.post("/api/auth/register", async (req: Request, res: Response) => {
+    try {
+      const { phone, password, name } = req.body;
+
+      if (!phone || !password || !name) {
+        return res.status(400).json({ error: "Todos os campos são obrigatórios" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getAdminUserByPhone(phone);
+      if (existingUser) {
+        return res.status(400).json({ error: "Este número já está cadastrado" });
+      }
+
+      // Create new user
+      const newUser = await storage.createAdminUser({
+        phone,
+        password,
+        name,
+      });
+
+      req.session.userId = newUser.id;
+
+      res.json({
+        id: newUser.id,
+        phone: newUser.phone,
+        name: newUser.name,
+      });
+    } catch (error) {
+      console.error("Register error:", error);
+      res.status(500).json({ error: "Erro ao criar conta" });
+    }
+  });
+
   // Login route
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
