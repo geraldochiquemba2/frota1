@@ -6,7 +6,7 @@ interface TripLogCardProps {
   vehiclePlate: string;
   driverName: string;
   startLocation: string;
-  endLocation: string;
+  endLocation?: string;
   startTime: string;
   endTime?: string;
   distance?: number;

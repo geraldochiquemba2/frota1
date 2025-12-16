@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { MaintenanceCard } from "@/components/fleet/MaintenanceCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -20,17 +22,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Calendar, Wrench } from "lucide-react";
+import { Plus, Search, Wrench } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Maintenance as MaintenanceType, InsertMaintenance, Vehicle } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
-// todo: remove mock functionality
-const mockMaintenance = [
-  { id: "m1", vehiclePlate: "ABC-1234", serviceType: "Troca de Óleo", scheduledDate: "2024-12-20", status: "scheduled" as const, description: "Troca de óleo e filtro regular" },
-  { id: "m2", vehiclePlate: "XYZ-5678", serviceType: "Inspeção de Freios", scheduledDate: "2024-12-18", status: "in-progress" as const, description: "Inspeção completa do sistema de freios e troca de pastilhas" },
-  { id: "m3", vehiclePlate: "DEF-9012", serviceType: "Rodízio de Pneus", scheduledDate: "2024-12-10", status: "overdue" as const, description: "Rodízio de pneus e verificação de pressão" },
-  { id: "m4", vehiclePlate: "GHI-3456", serviceType: "Revisão do Motor", scheduledDate: "2024-12-01", status: "completed" as const, description: "Revisão completa do motor e diagnóstico" },
-  { id: "m5", vehiclePlate: "JKL-7890", serviceType: "Serviço de Câmbio", scheduledDate: "2024-12-22", status: "scheduled" as const, description: "Troca de óleo do câmbio" },
-  { id: "m6", vehiclePlate: "MNO-2345", serviceType: "Troca de Filtro de Ar", scheduledDate: "2024-12-25", status: "scheduled" as const, description: "Troca dos filtros de ar do motor e cabine" },
-];
+type MaintenanceStatus = "scheduled" | "in-progress" | "completed" | "overdue";
 
 const serviceTypes = [
   "Troca de Óleo",
@@ -45,18 +42,59 @@ const serviceTypes = [
 ];
 
 export default function Maintenance() {
-  const [maintenance, setMaintenance] = useState(mockMaintenance);
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "scheduled" | "in-progress" | "completed" | "overdue">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | MaintenanceStatus>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newMaintenance, setNewMaintenance] = useState({
+    vehicleId: "",
     vehiclePlate: "",
     serviceType: "",
     scheduledDate: "",
     description: "",
   });
 
-  const filteredMaintenance = maintenance.filter(m => {
+  const { data: maintenanceRecords = [], isLoading } = useQuery<MaintenanceType[]>({
+    queryKey: ["/api/maintenance"],
+  });
+
+  const { data: vehicles = [] } = useQuery<Vehicle[]>({
+    queryKey: ["/api/vehicles"],
+  });
+
+  const createMaintenanceMutation = useMutation({
+    mutationFn: async (record: Partial<InsertMaintenance>) => {
+      const res = await apiRequest("POST", "/api/maintenance", record);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/maintenance"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/metrics"] });
+      toast({ title: "Manutenção agendada com sucesso!" });
+      setIsAddDialogOpen(false);
+      setNewMaintenance({ vehicleId: "", vehiclePlate: "", serviceType: "", scheduledDate: "", description: "" });
+    },
+    onError: () => {
+      toast({ title: "Erro ao agendar manutenção", variant: "destructive" });
+    },
+  });
+
+  const updateMaintenanceMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const res = await apiRequest("PATCH", `/api/maintenance/${id}`, { status });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/maintenance"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/metrics"] });
+      toast({ title: "Manutenção atualizada!" });
+    },
+    onError: () => {
+      toast({ title: "Erro ao atualizar manutenção", variant: "destructive" });
+    },
+  });
+
+  const filteredMaintenance = maintenanceRecords.filter(m => {
     const matchesSearch = m.vehiclePlate.toLowerCase().includes(search.toLowerCase()) ||
       m.serviceType.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || m.status === statusFilter;
@@ -64,30 +102,37 @@ export default function Maintenance() {
   });
 
   const handleAddMaintenance = () => {
-    const id = `m${Date.now()}`;
-    setMaintenance([...maintenance, {
-      ...newMaintenance,
-      id,
-      status: "scheduled" as const,
-    }]);
-    setNewMaintenance({ vehiclePlate: "", serviceType: "", scheduledDate: "", description: "" });
-    setIsAddDialogOpen(false);
-    console.log("Maintenance scheduled:", newMaintenance);
+    if (!newMaintenance.vehiclePlate || !newMaintenance.serviceType || !newMaintenance.scheduledDate) {
+      toast({ title: "Preencha todos os campos obrigatórios", variant: "destructive" });
+      return;
+    }
+    createMaintenanceMutation.mutate({
+      vehicleId: newMaintenance.vehicleId || null,
+      vehiclePlate: newMaintenance.vehiclePlate,
+      serviceType: newMaintenance.serviceType,
+      scheduledDate: newMaintenance.scheduledDate,
+      description: newMaintenance.description || null,
+      status: "scheduled",
+    });
   };
 
   const handleComplete = (id: string) => {
-    setMaintenance(maintenance.map(m =>
-      m.id === id ? { ...m, status: "completed" as const } : m
-    ));
-    console.log("Maintenance completed:", id);
+    updateMaintenanceMutation.mutate({ id, status: "completed" });
+  };
+
+  const handleVehicleSelect = (vehicleId: string) => {
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    if (vehicle) {
+      setNewMaintenance({ ...newMaintenance, vehicleId, vehiclePlate: vehicle.plate });
+    }
   };
 
   const statusCounts = {
-    all: maintenance.length,
-    scheduled: maintenance.filter(m => m.status === "scheduled").length,
-    "in-progress": maintenance.filter(m => m.status === "in-progress").length,
-    overdue: maintenance.filter(m => m.status === "overdue").length,
-    completed: maintenance.filter(m => m.status === "completed").length,
+    all: maintenanceRecords.length,
+    scheduled: maintenanceRecords.filter(m => m.status === "scheduled").length,
+    "in-progress": maintenanceRecords.filter(m => m.status === "in-progress").length,
+    overdue: maintenanceRecords.filter(m => m.status === "overdue").length,
+    completed: maintenanceRecords.filter(m => m.status === "completed").length,
   };
 
   const statusLabels = {
@@ -121,14 +166,32 @@ export default function Maintenance() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="vehiclePlate">Placa do Veículo</Label>
-                <Input
-                  id="vehiclePlate"
-                  placeholder="ABC-1234"
-                  value={newMaintenance.vehiclePlate}
-                  onChange={(e) => setNewMaintenance({ ...newMaintenance, vehiclePlate: e.target.value })}
-                  data-testid="input-maintenance-plate"
-                />
+                <Label htmlFor="vehicle">Veículo</Label>
+                {vehicles.length > 0 ? (
+                  <Select
+                    value={newMaintenance.vehicleId}
+                    onValueChange={handleVehicleSelect}
+                  >
+                    <SelectTrigger data-testid="select-maintenance-vehicle">
+                      <SelectValue placeholder="Selecione um veículo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vehicles.map(vehicle => (
+                        <SelectItem key={vehicle.id} value={vehicle.id}>
+                          {vehicle.plate} - {vehicle.make} {vehicle.model}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    id="vehiclePlate"
+                    placeholder="ABC-1234"
+                    value={newMaintenance.vehiclePlate}
+                    onChange={(e) => setNewMaintenance({ ...newMaintenance, vehiclePlate: e.target.value })}
+                    data-testid="input-maintenance-plate"
+                  />
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="serviceType">Tipo de Serviço</Label>
@@ -169,7 +232,13 @@ export default function Maintenance() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleAddMaintenance} data-testid="button-confirm-schedule">Agendar</Button>
+              <Button 
+                onClick={handleAddMaintenance} 
+                disabled={createMaintenanceMutation.isPending}
+                data-testid="button-confirm-schedule"
+              >
+                {createMaintenanceMutation.isPending ? "Agendando..." : "Agendar"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -201,21 +270,36 @@ export default function Maintenance() {
         ))}
       </div>
 
-      {filteredMaintenance.length > 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
+        </div>
+      ) : filteredMaintenance.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredMaintenance.map(item => (
             <MaintenanceCard
               key={item.id}
-              {...item}
+              id={item.id}
+              vehiclePlate={item.vehiclePlate}
+              serviceType={item.serviceType}
+              scheduledDate={item.scheduledDate}
+              status={item.status as MaintenanceStatus}
+              description={item.description ?? undefined}
               onComplete={() => handleComplete(item.id)}
-              onReschedule={() => console.log("Reschedule", item.id)}
+              onReschedule={() => {}}
             />
           ))}
         </div>
       ) : (
         <div className="text-center py-12">
           <Wrench className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Nenhum registro de manutenção encontrado.</p>
+          <p className="text-muted-foreground">
+            {maintenanceRecords.length === 0 
+              ? "Nenhuma manutenção agendada. Agende a primeira!" 
+              : "Nenhum registro de manutenção encontrado."}
+          </p>
         </div>
       )}
     </div>

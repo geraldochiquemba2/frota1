@@ -1,26 +1,58 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { AlertItem, type AlertType } from "@/components/fleet/AlertItem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Bell, CheckCheck } from "lucide-react";
-
-// todo: remove mock functionality
-const mockAlerts = [
-  { id: "a1", type: "fuel" as AlertType, title: "Alerta de Combustível Baixo", description: "Veículo GHI-3456 com nível de combustível abaixo de 15%", timestamp: "10 minutos atrás" },
-  { id: "a2", type: "document" as AlertType, title: "CNH Expirando", description: "CNH da motorista Maria Santos expira em 15 dias", timestamp: "1 hora atrás" },
-  { id: "a3", type: "maintenance" as AlertType, title: "Manutenção Atrasada", description: "Veículo ABC-1234 está atrasado para troca de óleo em 500km", timestamp: "2 horas atrás" },
-  { id: "a4", type: "speed" as AlertType, title: "Excesso de Velocidade", description: "Veículo XYZ-5678 ultrapassou limite de velocidade na BR-116", timestamp: "3 horas atrás" },
-  { id: "a5", type: "document" as AlertType, title: "Seguro Expirando", description: "Seguro do veículo DEF-9012 expira em 7 dias", timestamp: "5 horas atrás" },
-  { id: "a6", type: "maintenance" as AlertType, title: "Pressão de Pneu Baixa", description: "Veículo JKL-7890 com pressão baixa no pneu traseiro esquerdo", timestamp: "6 horas atrás" },
-  { id: "a7", type: "fuel" as AlertType, title: "Consumo de Combustível Anormal", description: "Veículo MNO-2345 apresentando consumo 30% acima da média", timestamp: "1 dia atrás" },
-  { id: "a8", type: "speed" as AlertType, title: "Frenagem Brusca Detectada", description: "Veículo ABC-1234 teve 3 eventos de frenagem brusca hoje", timestamp: "1 dia atrás" },
-];
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Alert } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function Alerts() {
-  const [alerts, setAlerts] = useState(mockAlerts);
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<AlertType | "all">("all");
+
+  const { data: alerts = [], isLoading } = useQuery<Alert[]>({
+    queryKey: ["/api/alerts"],
+  });
+
+  const dismissAlertMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("PATCH", `/api/alerts/${id}/dismiss`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/alerts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/metrics"] });
+      toast({ title: "Alerta dispensado!" });
+    },
+    onError: () => {
+      toast({ title: "Erro ao dispensar alerta", variant: "destructive" });
+    },
+  });
+
+  const dismissAllMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/alerts/dismiss-all");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/alerts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/metrics"] });
+      toast({ title: "Todos os alertas foram dispensados!" });
+    },
+    onError: () => {
+      toast({ title: "Erro ao dispensar alertas", variant: "destructive" });
+    },
+  });
+
+  const formatTimestamp = (timestamp: Date | null) => {
+    if (!timestamp) return "";
+    return formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: ptBR });
+  };
 
   const filteredAlerts = alerts.filter(a => {
     const matchesSearch = a.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -28,16 +60,6 @@ export default function Alerts() {
     const matchesType = typeFilter === "all" || a.type === typeFilter;
     return matchesSearch && matchesType;
   });
-
-  const handleDismiss = (id: string) => {
-    setAlerts(alerts.filter(a => a.id !== id));
-    console.log("Alert dismissed:", id);
-  };
-
-  const handleDismissAll = () => {
-    setAlerts([]);
-    console.log("All alerts dismissed");
-  };
 
   const typeCounts = {
     all: alerts.length,
@@ -55,9 +77,14 @@ export default function Alerts() {
           <p className="text-muted-foreground">Monitore e gerencie os alertas da frota</p>
         </div>
         {alerts.length > 0 && (
-          <Button variant="outline" onClick={handleDismissAll} data-testid="button-dismiss-all">
+          <Button 
+            variant="outline" 
+            onClick={() => dismissAllMutation.mutate()}
+            disabled={dismissAllMutation.isPending}
+            data-testid="button-dismiss-all"
+          >
             <CheckCheck className="h-4 w-4 mr-2" />
-            Dispensar Todos
+            {dismissAllMutation.isPending ? "Dispensando..." : "Dispensar Todos"}
           </Button>
         )}
       </div>
@@ -113,7 +140,21 @@ export default function Alerts() {
         </Button>
       </div>
 
-      {filteredAlerts.length > 0 ? (
+      {isLoading ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Alertas Ativos
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Skeleton className="h-16" />
+            <Skeleton className="h-16" />
+            <Skeleton className="h-16" />
+          </CardContent>
+        </Card>
+      ) : filteredAlerts.length > 0 ? (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -125,9 +166,13 @@ export default function Alerts() {
             {filteredAlerts.map(alert => (
               <AlertItem
                 key={alert.id}
-                {...alert}
-                onDismiss={() => handleDismiss(alert.id)}
-                onClick={() => console.log("Alert clicked:", alert.id)}
+                id={alert.id}
+                type={alert.type as AlertType}
+                title={alert.title}
+                description={alert.description}
+                timestamp={formatTimestamp(alert.timestamp)}
+                onDismiss={() => dismissAlertMutation.mutate(alert.id)}
+                onClick={() => {}}
               />
             ))}
           </CardContent>
