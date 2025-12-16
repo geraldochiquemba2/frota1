@@ -45,9 +45,10 @@ export type Vehicle = typeof vehicles.$inferSelect;
 export const drivers = pgTable("drivers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name", { length: 200 }).notNull(),
-  phone: varchar("phone", { length: 30 }).notNull(),
-  email: varchar("email", { length: 200 }).notNull(),
-  licenseExpiry: varchar("license_expiry", { length: 20 }).notNull(),
+  phone: varchar("phone", { length: 30 }).notNull().unique(),
+  email: varchar("email", { length: 200 }),
+  password: varchar("password", { length: 200 }),
+  licenseExpiry: varchar("license_expiry", { length: 20 }),
   status: varchar("status", { length: 20 }).notNull().default("available"),
   assignedVehicleId: varchar("assigned_vehicle_id"),
   photo: text("photo"),

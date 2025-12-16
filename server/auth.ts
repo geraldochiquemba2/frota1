@@ -6,6 +6,7 @@ import type { AdminUser } from "@shared/schema";
 declare module "express-session" {
   interface SessionData {
     userId?: string;
+    userType?: "admin" | "driver";
   }
 }
 
@@ -26,7 +27,7 @@ export function setupAuth(app: Express): void {
   // Ensure admin user exists on startup
   storage.ensureAdminExists().catch(console.error);
 
-  // Register route
+  // Register route (creates a driver)
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
       const { phone, password, name } = req.body;
@@ -35,25 +36,28 @@ export function setupAuth(app: Express): void {
         return res.status(400).json({ error: "Todos os campos são obrigatórios" });
       }
 
-      // Check if user already exists
-      const existingUser = await storage.getAdminUserByPhone(phone);
-      if (existingUser) {
+      // Check if driver already exists
+      const existingDriver = await storage.getDriverByPhone(phone);
+      if (existingDriver) {
         return res.status(400).json({ error: "Este número já está cadastrado" });
       }
 
-      // Create new user
-      const newUser = await storage.createAdminUser({
+      // Create new driver
+      const newDriver = await storage.createDriver({
         phone,
         password,
         name,
+        status: "available",
       });
 
-      req.session.userId = newUser.id;
+      req.session.userId = newDriver.id;
+      req.session.userType = "driver";
 
       res.json({
-        id: newUser.id,
-        phone: newUser.phone,
-        name: newUser.name,
+        id: newDriver.id,
+        phone: newDriver.phone,
+        name: newDriver.name,
+        type: "driver",
       });
     } catch (error) {
       console.error("Register error:", error);
@@ -61,7 +65,7 @@ export function setupAuth(app: Express): void {
     }
   });
 
-  // Login route
+  // Login route (checks admin first, then driver)
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
       const { phone, password } = req.body;
@@ -70,19 +74,33 @@ export function setupAuth(app: Express): void {
         return res.status(400).json({ error: "Número e senha são obrigatórios" });
       }
 
-      const user = await storage.getAdminUserByPhone(phone);
-
-      if (!user || user.password !== password) {
-        return res.status(401).json({ error: "Credenciais inválidas" });
+      // Try admin login first
+      const adminUser = await storage.getAdminUserByPhone(phone);
+      if (adminUser && adminUser.password === password) {
+        req.session.userId = adminUser.id;
+        req.session.userType = "admin";
+        return res.json({
+          id: adminUser.id,
+          phone: adminUser.phone,
+          name: adminUser.name,
+          type: "admin",
+        });
       }
 
-      req.session.userId = user.id;
+      // Try driver login
+      const driver = await storage.getDriverByPhone(phone);
+      if (driver && driver.password === password) {
+        req.session.userId = driver.id;
+        req.session.userType = "driver";
+        return res.json({
+          id: driver.id,
+          phone: driver.phone,
+          name: driver.name,
+          type: "driver",
+        });
+      }
 
-      res.json({
-        id: user.id,
-        phone: user.phone,
-        name: user.name,
-      });
+      return res.status(401).json({ error: "Credenciais inválidas" });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Erro ao fazer login" });
@@ -106,8 +124,23 @@ export function setupAuth(app: Express): void {
         return res.status(401).json({ error: "Não autenticado" });
       }
 
-      const user = await storage.getAdminUser(req.session.userId);
+      const userType = req.session.userType || "admin";
 
+      if (userType === "driver") {
+        const driver = await storage.getDriver(req.session.userId);
+        if (!driver) {
+          req.session.destroy(() => {});
+          return res.status(401).json({ error: "Usuário não encontrado" });
+        }
+        return res.json({
+          id: driver.id,
+          phone: driver.phone,
+          name: driver.name,
+          type: "driver",
+        });
+      }
+
+      const user = await storage.getAdminUser(req.session.userId);
       if (!user) {
         req.session.destroy(() => {});
         return res.status(401).json({ error: "Usuário não encontrado" });
@@ -117,6 +150,7 @@ export function setupAuth(app: Express): void {
         id: user.id,
         phone: user.phone,
         name: user.name,
+        type: "admin",
       });
     } catch (error) {
       console.error("Get user error:", error);

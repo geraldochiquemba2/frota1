@@ -27,6 +27,7 @@ export interface IStorage {
   // Drivers
   getDrivers(): Promise<Driver[]>;
   getDriver(id: string): Promise<Driver | undefined>;
+  getDriverByPhone(phone: string): Promise<Driver | undefined>;
   createDriver(driver: InsertDriver): Promise<Driver>;
   updateDriver(id: string, driver: Partial<InsertDriver>): Promise<Driver | undefined>;
   deleteDriver(id: string): Promise<boolean>;
@@ -119,6 +120,11 @@ export class DatabaseStorage implements IStorage {
 
   async getDriver(id: string): Promise<Driver | undefined> {
     const [driver] = await db.select().from(drivers).where(eq(drivers.id, id));
+    return driver;
+  }
+
+  async getDriverByPhone(phone: string): Promise<Driver | undefined> {
+    const [driver] = await db.select().from(drivers).where(eq(drivers.phone, phone));
     return driver;
   }
 
