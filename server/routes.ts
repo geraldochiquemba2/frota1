@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertVehicleSchema, insertDriverSchema, insertTripSchema, insertMaintenanceSchema, insertAlertSchema, insertSupplierSchema, insertFuelLogSchema, insertBankAccountSchema, insertTransactionSchema } from "@shared/schema";
+import { insertVehicleSchema, insertDriverSchema, insertTripSchema, insertMaintenanceSchema, insertAlertSchema, insertSupplierSchema, insertFuelLogSchema, insertBankAccountSchema, insertTransactionSchema, insertInventoryItemSchema } from "@shared/schema";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -883,6 +883,78 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching finance summary:", error);
       res.status(500).json({ error: "Erro ao buscar resumo financeiro" });
+    }
+  });
+
+  // ==================== INVENTORY ROUTES ====================
+
+  app.get("/api/inventory", async (req, res) => {
+    try {
+      const items = await storage.getInventoryItems();
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching inventory items:", error);
+      res.status(500).json({ error: "Erro ao buscar itens do inventário" });
+    }
+  });
+
+  app.get("/api/inventory/low-stock", async (req, res) => {
+    try {
+      const items = await storage.getLowStockItems();
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching low stock items:", error);
+      res.status(500).json({ error: "Erro ao buscar itens com stock baixo" });
+    }
+  });
+
+  app.get("/api/inventory/:id", async (req, res) => {
+    try {
+      const item = await storage.getInventoryItem(req.params.id);
+      if (!item) {
+        return res.status(404).json({ error: "Item não encontrado" });
+      }
+      res.json(item);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar item" });
+    }
+  });
+
+  app.post("/api/inventory", async (req, res) => {
+    try {
+      const parsed = insertInventoryItemSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Dados inválidos", details: parsed.error });
+      }
+      const item = await storage.createInventoryItem(parsed.data);
+      res.status(201).json(item);
+    } catch (error) {
+      console.error("Error creating inventory item:", error);
+      res.status(500).json({ error: "Erro ao criar item" });
+    }
+  });
+
+  app.patch("/api/inventory/:id", async (req, res) => {
+    try {
+      const item = await storage.updateInventoryItem(req.params.id, req.body);
+      if (!item) {
+        return res.status(404).json({ error: "Item não encontrado" });
+      }
+      res.json(item);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao atualizar item" });
+    }
+  });
+
+  app.delete("/api/inventory/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteInventoryItem(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Item não encontrado" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao excluir item" });
     }
   });
 

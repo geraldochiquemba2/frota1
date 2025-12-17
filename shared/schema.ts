@@ -221,3 +221,25 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
 
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
+
+// Inventory Items table (parts and consumables)
+export const inventoryItems = pgTable("inventory_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 200 }).notNull(),
+  partNumber: varchar("part_number", { length: 100 }),
+  category: varchar("category", { length: 100 }).notNull(),
+  quantity: integer("quantity").notNull().default(0),
+  minQuantity: integer("min_quantity").default(5),
+  unit: varchar("unit", { length: 30 }).default("unidade"),
+  unitPrice: real("unit_price"),
+  location: varchar("location", { length: 200 }),
+  supplierId: varchar("supplier_id"),
+  notes: text("notes"),
+});
+
+export const insertInventoryItemSchema = createInsertSchema(inventoryItems).omit({
+  id: true,
+});
+
+export type InsertInventoryItem = z.infer<typeof insertInventoryItemSchema>;
+export type InventoryItem = typeof inventoryItems.$inferSelect;

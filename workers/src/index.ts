@@ -12,6 +12,7 @@ import { driverAppRoutes } from "./routes/driver-app";
 import { supplierRoutes } from "./routes/suppliers";
 import { fuelRoutes } from "./routes/fuel";
 import { financeRoutes } from "./routes/finance";
+import { inventoryRoutes } from "./routes/inventory";
 import type { JWTPayload } from "./lib/jwt";
 
 export type Bindings = {
@@ -80,6 +81,7 @@ app.route("/api/driver", driverAppRoutes);
 app.route("/api/suppliers", supplierRoutes);
 app.route("/api/fuel", fuelRoutes);
 app.route("/api/finance", financeRoutes);
+app.route("/api/inventory", inventoryRoutes);
 
 app.notFound((c) => {
   return c.json({ error: "Endpoint não encontrado" }, 404);

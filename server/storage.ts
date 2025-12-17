@@ -9,7 +9,8 @@ import {
   type FuelLog, type InsertFuelLog,
   type BankAccount, type InsertBankAccount,
   type Transaction, type InsertTransaction,
-  adminUsers, vehicles, drivers, trips, maintenance, alerts, suppliers, fuelLogs, bankAccounts, transactions
+  type InventoryItem, type InsertInventoryItem,
+  adminUsers, vehicles, drivers, trips, maintenance, alerts, suppliers, fuelLogs, bankAccounts, transactions, inventoryItems
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
@@ -107,6 +108,14 @@ export interface IStorage {
     balance: number;
     monthTransactions: number;
   }>;
+
+  // Inventory Items
+  getInventoryItems(): Promise<InventoryItem[]>;
+  getInventoryItem(id: string): Promise<InventoryItem | undefined>;
+  createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem>;
+  updateInventoryItem(id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined>;
+  deleteInventoryItem(id: string): Promise<boolean>;
+  getLowStockItems(): Promise<InventoryItem[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -486,6 +495,36 @@ export class DatabaseStorage implements IStorage {
       balance: totalIncome - totalExpenses,
       monthTransactions,
     };
+  }
+
+  // Inventory Items
+  async getInventoryItems(): Promise<InventoryItem[]> {
+    return db.select().from(inventoryItems);
+  }
+
+  async getInventoryItem(id: string): Promise<InventoryItem | undefined> {
+    const [item] = await db.select().from(inventoryItems).where(eq(inventoryItems.id, id));
+    return item;
+  }
+
+  async createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem> {
+    const [newItem] = await db.insert(inventoryItems).values(item).returning();
+    return newItem;
+  }
+
+  async updateInventoryItem(id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined> {
+    const [updated] = await db.update(inventoryItems).set(item).where(eq(inventoryItems.id, id)).returning();
+    return updated;
+  }
+
+  async deleteInventoryItem(id: string): Promise<boolean> {
+    const result = await db.delete(inventoryItems).where(eq(inventoryItems.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getLowStockItems(): Promise<InventoryItem[]> {
+    const allItems = await db.select().from(inventoryItems);
+    return allItems.filter(item => item.quantity <= (item.minQuantity || 5));
   }
 }
 
