@@ -36,6 +36,13 @@ export default function DriverDashboard() {
   const { toast } = useToast();
   const [startLocation, setStartLocation] = useState("");
   const [destination, setDestination] = useState("");
+  
+  // Start location cascading selection
+  const [startSelectedProvince, setStartSelectedProvince] = useState("");
+  const [startSelectedMunicipality, setStartSelectedMunicipality] = useState("");
+  const [startSelectedNeighborhood, setStartSelectedNeighborhood] = useState("");
+  
+  // Destination cascading selection
   const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedMunicipality, setSelectedMunicipality] = useState("");
   const [selectedNeighborhood, setSelectedNeighborhood] = useState("");
@@ -45,11 +52,28 @@ export default function DriverDashboard() {
   const [endOdometer, setEndOdometer] = useState("");
   
   const provinces = getProvinces();
+  
+  // Start location derived values
+  const startMunicipalities = startSelectedProvince ? getMunicipalities(startSelectedProvince) : [];
+  const startNeighborhoods = startSelectedProvince && startSelectedMunicipality 
+    ? getNeighborhoods(startSelectedProvince, startSelectedMunicipality) 
+    : [];
+  
+  // Destination derived values
   const municipalities = selectedProvince ? getMunicipalities(selectedProvince) : [];
   const neighborhoods = selectedProvince && selectedMunicipality 
     ? getNeighborhoods(selectedProvince, selectedMunicipality) 
     : [];
 
+  // Update startLocation when cascading selection changes
+  useEffect(() => {
+    const parts = [startSelectedNeighborhood, startSelectedMunicipality, startSelectedProvince].filter(Boolean);
+    if (parts.length > 0) {
+      setStartLocation(parts.join(", "));
+    }
+  }, [startSelectedProvince, startSelectedMunicipality, startSelectedNeighborhood]);
+
+  // Update destination when cascading selection changes
   useEffect(() => {
     const parts = [selectedNeighborhood, selectedMunicipality, selectedProvince].filter(Boolean);
     if (parts.length > 0) {
@@ -810,31 +834,70 @@ export default function DriverDashboard() {
 
               <form onSubmit={handleStartTrip} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="startLocation">Local de Partida (preenchido automaticamente pelo GPS)</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="startLocation"
-                      placeholder={gpsStatus === "requesting" ? "A obter localização..." : "A localização será obtida pelo GPS"}
-                      value={startLocation}
-                      onChange={(e) => setStartLocation(e.target.value)}
-                      data-testid="input-start-location"
-                    />
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant={gpsStatus === "active" ? "default" : "outline"}
-                      onClick={requestGpsPermission}
-                      disabled={gpsStatus === "requesting"}
-                      data-testid="button-get-location"
-                      title="Ativar/Atualizar GPS"
+                  <Label>Local de Partida *</Label>
+                  <div className="grid gap-2">
+                    <Select 
+                      value={startSelectedProvince} 
+                      onValueChange={(value) => {
+                        setStartSelectedProvince(value);
+                        setStartSelectedMunicipality("");
+                        setStartSelectedNeighborhood("");
+                      }}
                     >
-                      {gpsStatus === "requesting" ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Navigation className="h-4 w-4" />
-                      )}
-                    </Button>
+                      <SelectTrigger data-testid="select-start-province">
+                        <SelectValue placeholder="Selecione a Província" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {provinces.map((province) => (
+                          <SelectItem key={province} value={province}>
+                            {province}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select 
+                      value={startSelectedMunicipality} 
+                      onValueChange={(value) => {
+                        setStartSelectedMunicipality(value);
+                        setStartSelectedNeighborhood("");
+                      }}
+                      disabled={!startSelectedProvince}
+                    >
+                      <SelectTrigger data-testid="select-start-municipality">
+                        <SelectValue placeholder="Selecione o Município" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {startMunicipalities.map((municipality) => (
+                          <SelectItem key={municipality} value={municipality}>
+                            {municipality}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select 
+                      value={startSelectedNeighborhood} 
+                      onValueChange={setStartSelectedNeighborhood}
+                      disabled={!startSelectedMunicipality}
+                    >
+                      <SelectTrigger data-testid="select-start-neighborhood">
+                        <SelectValue placeholder="Selecione o Bairro" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {startNeighborhoods.map((neighborhood) => (
+                          <SelectItem key={neighborhood} value={neighborhood}>
+                            {neighborhood}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+                  {startLocation && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Partida: {startLocation}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Destino *</Label>
@@ -926,7 +989,7 @@ export default function DriverDashboard() {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={startTripMutation.isPending || !destination}
+                  disabled={startTripMutation.isPending || !destination || !startLocation}
                   data-testid="button-start-trip"
                 >
                   <Play className="h-4 w-4 mr-2" />
