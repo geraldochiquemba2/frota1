@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
+import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 import type { AdminUser } from "@shared/schema";
 
@@ -11,8 +12,18 @@ declare module "express-session" {
 }
 
 export function setupAuth(app: Express): void {
+  const databaseUrl = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+  
+  const pgStore = connectPg(session);
+  const sessionStore = new pgStore({
+    conString: databaseUrl,
+    createTableIfMissing: true,
+    tableName: "sessions",
+  });
+
   app.use(
     session({
+      store: sessionStore,
       secret: process.env.SESSION_SECRET || "fleettrack-secret-key-2024",
       resave: false,
       saveUninitialized: false,
@@ -20,6 +31,7 @@ export function setupAuth(app: Express): void {
         secure: process.env.NODE_ENV === "production",
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        sameSite: "lax",
       },
     })
   );
