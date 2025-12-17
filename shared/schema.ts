@@ -136,3 +136,20 @@ export const insertAlertSchema = createInsertSchema(alerts).omit({
 
 export type InsertAlert = z.infer<typeof insertAlertSchema>;
 export type Alert = typeof alerts.$inferSelect;
+
+// Suppliers table
+export const suppliers = pgTable("suppliers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 200 }).notNull(),
+  contact: varchar("contact", { length: 100 }),
+  categories: text("categories").array(),
+  address: text("address"),
+  notes: text("notes"),
+});
+
+export const insertSupplierSchema = createInsertSchema(suppliers).omit({
+  id: true,
+});
+
+export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
+export type Supplier = typeof suppliers.$inferSelect;

@@ -22,6 +22,7 @@ import Alerts from "@/pages/alerts";
 import Settings from "@/pages/settings";
 import Landing from "@/pages/landing";
 import DriverDashboard from "@/pages/driver-dashboard";
+import Suppliers from "@/pages/suppliers";
 
 function Router() {
   return (
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/maintenance" component={Maintenance} />
       <Route path="/trips" component={Trips} />
       <Route path="/alerts" component={Alerts} />
+      <Route path="/suppliers" component={Suppliers} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertVehicleSchema, insertDriverSchema, insertTripSchema, insertMaintenanceSchema, insertAlertSchema } from "@shared/schema";
+import { insertVehicleSchema, insertDriverSchema, insertTripSchema, insertMaintenanceSchema, insertAlertSchema, insertSupplierSchema } from "@shared/schema";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -606,6 +606,67 @@ export async function registerRoutes(
       res.json(vehicle || null);
     } catch (error) {
       res.status(500).json({ error: "Erro ao buscar veículo" });
+    }
+  });
+
+  // ==================== SUPPLIERS ROUTES ====================
+  
+  app.get("/api/suppliers", async (req, res) => {
+    try {
+      const suppliersList = await storage.getSuppliers();
+      res.json(suppliersList);
+    } catch (error) {
+      console.error("Error fetching suppliers:", error);
+      res.status(500).json({ error: "Erro ao buscar fornecedores" });
+    }
+  });
+
+  app.get("/api/suppliers/:id", async (req, res) => {
+    try {
+      const supplier = await storage.getSupplier(req.params.id);
+      if (!supplier) {
+        return res.status(404).json({ error: "Fornecedor não encontrado" });
+      }
+      res.json(supplier);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar fornecedor" });
+    }
+  });
+
+  app.post("/api/suppliers", async (req, res) => {
+    try {
+      const parsed = insertSupplierSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Dados inválidos", details: parsed.error });
+      }
+      const supplier = await storage.createSupplier(parsed.data);
+      res.status(201).json(supplier);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao criar fornecedor" });
+    }
+  });
+
+  app.patch("/api/suppliers/:id", async (req, res) => {
+    try {
+      const supplier = await storage.updateSupplier(req.params.id, req.body);
+      if (!supplier) {
+        return res.status(404).json({ error: "Fornecedor não encontrado" });
+      }
+      res.json(supplier);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao atualizar fornecedor" });
+    }
+  });
+
+  app.delete("/api/suppliers/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteSupplier(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Fornecedor não encontrado" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao excluir fornecedor" });
     }
   });
 

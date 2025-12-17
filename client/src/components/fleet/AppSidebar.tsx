@@ -22,6 +22,7 @@ import {
   Bell,
   Settings,
   LogOut,
+  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -32,6 +33,7 @@ const mainNavItems = [
   { title: "Mapa ao Vivo", url: "/map", icon: Map },
   { title: "Manutenção", url: "/maintenance", icon: Wrench },
   { title: "Registro de Viagens", url: "/trips", icon: ClipboardList },
+  { title: "Fornecedores", url: "/suppliers", icon: Building2 },
   { title: "Alertas", url: "/alerts", icon: Bell },
 ];
 

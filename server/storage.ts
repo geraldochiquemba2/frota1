@@ -5,7 +5,8 @@ import {
   type Trip, type InsertTrip,
   type Maintenance, type InsertMaintenance,
   type Alert, type InsertAlert,
-  adminUsers, vehicles, drivers, trips, maintenance, alerts
+  type Supplier, type InsertSupplier,
+  adminUsers, vehicles, drivers, trips, maintenance, alerts, suppliers
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -61,6 +62,13 @@ export interface IStorage {
     activeAlerts: number;
     maintenanceDue: number;
   }>;
+
+  // Suppliers
+  getSuppliers(): Promise<Supplier[]>;
+  getSupplier(id: string): Promise<Supplier | undefined>;
+  createSupplier(supplier: InsertSupplier): Promise<Supplier>;
+  updateSupplier(id: string, supplier: Partial<InsertSupplier>): Promise<Supplier | undefined>;
+  deleteSupplier(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -246,6 +254,31 @@ export class DatabaseStorage implements IStorage {
       activeAlerts: activeAlertsList.length,
       maintenanceDue: maintenanceList.length,
     };
+  }
+
+  // Suppliers
+  async getSuppliers(): Promise<Supplier[]> {
+    return db.select().from(suppliers);
+  }
+
+  async getSupplier(id: string): Promise<Supplier | undefined> {
+    const [supplier] = await db.select().from(suppliers).where(eq(suppliers.id, id));
+    return supplier;
+  }
+
+  async createSupplier(supplier: InsertSupplier): Promise<Supplier> {
+    const [newSupplier] = await db.insert(suppliers).values(supplier).returning();
+    return newSupplier;
+  }
+
+  async updateSupplier(id: string, supplier: Partial<InsertSupplier>): Promise<Supplier | undefined> {
+    const [updated] = await db.update(suppliers).set(supplier).where(eq(suppliers.id, id)).returning();
+    return updated;
+  }
+
+  async deleteSupplier(id: string): Promise<boolean> {
+    const result = await db.delete(suppliers).where(eq(suppliers.id, id)).returning();
+    return result.length > 0;
   }
 }
 
