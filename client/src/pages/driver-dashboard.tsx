@@ -43,10 +43,11 @@ export default function DriverDashboard() {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const watchIdRef = useRef<number | null>(null);
 
-  // Fallback: Get location from IP address
+  // Fallback: Get location from IP address (try multiple services)
   const getLocationFromIP = async (): Promise<{ lat: number; lng: number; city: string } | null> => {
+    // Try ipapi.co first
     try {
-      const response = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(10000) });
+      const response = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(8000) });
       const data = await response.json();
       if (data.latitude && data.longitude) {
         return {
@@ -56,8 +57,24 @@ export default function DriverDashboard() {
         };
       }
     } catch (e) {
-      console.log("IP geolocation failed:", e);
+      console.log("ipapi.co failed:", e);
     }
+    
+    // Try ip-api.com as backup
+    try {
+      const response = await fetch("http://ip-api.com/json/?fields=status,city,regionName,lat,lon", { signal: AbortSignal.timeout(8000) });
+      const data = await response.json();
+      if (data.status === "success" && data.lat && data.lon) {
+        return {
+          lat: data.lat,
+          lng: data.lon,
+          city: data.city || data.regionName || "Localização aproximada"
+        };
+      }
+    } catch (e) {
+      console.log("ip-api.com failed:", e);
+    }
+    
     return null;
   };
 
