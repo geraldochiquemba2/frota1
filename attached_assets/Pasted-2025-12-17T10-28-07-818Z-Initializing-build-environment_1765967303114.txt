@@ -1,0 +1,41 @@
+2025-12-17T10:28:07.818Z	Initializing build environment...
+2025-12-17T10:28:09.640Z	Success: Finished initializing build environment
+2025-12-17T10:28:09.935Z	Cloning repository...
+2025-12-17T10:28:11.266Z	Restoring from dependencies cache
+2025-12-17T10:28:11.268Z	Restoring from build output cache
+2025-12-17T10:28:11.273Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2025-12-17T10:28:11.637Z	Installing project dependencies: npm clean-install --progress=false
+2025-12-17T10:28:12.929Z	npm error code EUSAGE
+2025-12-17T10:28:12.930Z	npm error
+2025-12-17T10:28:12.931Z	npm error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.
+2025-12-17T10:28:12.931Z	npm error
+2025-12-17T10:28:12.931Z	npm error Invalid: lock file's @neondatabase/serverless@1.0.2 does not satisfy @neondatabase/serverless@0.10.4
+2025-12-17T10:28:12.931Z	npm error Missing: @types/pg@8.11.6 from lock file
+2025-12-17T10:28:12.931Z	npm error Missing: pg-types@4.1.0 from lock file
+2025-12-17T10:28:12.931Z	npm error Missing: pg-numeric@1.0.2 from lock file
+2025-12-17T10:28:12.931Z	npm error Missing: postgres-array@3.0.4 from lock file
+2025-12-17T10:28:12.931Z	npm error Missing: postgres-bytea@3.0.0 from lock file
+2025-12-17T10:28:12.932Z	npm error Missing: postgres-date@2.1.0 from lock file
+2025-12-17T10:28:12.932Z	npm error Missing: postgres-interval@3.0.0 from lock file
+2025-12-17T10:28:12.932Z	npm error Missing: postgres-range@1.1.4 from lock file
+2025-12-17T10:28:12.933Z	npm error Missing: obuf@1.1.2 from lock file
+2025-12-17T10:28:12.933Z	npm error
+2025-12-17T10:28:12.934Z	npm error Clean install a project
+2025-12-17T10:28:12.934Z	npm error
+2025-12-17T10:28:12.934Z	npm error Usage:
+2025-12-17T10:28:12.934Z	npm error npm ci
+2025-12-17T10:28:12.934Z	npm error
+2025-12-17T10:28:12.934Z	npm error Options:
+2025-12-17T10:28:12.934Z	npm error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]
+2025-12-17T10:28:12.935Z	npm error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]
+2025-12-17T10:28:12.935Z	npm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]
+2025-12-17T10:28:12.935Z	npm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]
+2025-12-17T10:28:12.935Z	npm error [--no-bin-links] [--no-fund] [--dry-run]
+2025-12-17T10:28:12.935Z	npm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]
+2025-12-17T10:28:12.935Z	npm error [-ws|--workspaces] [--include-workspace-root] [--install-links]
+2025-12-17T10:28:12.935Z	npm error
+2025-12-17T10:28:12.935Z	npm error aliases: clean-install, ic, install-clean, isntall-clean
+2025-12-17T10:28:12.935Z	npm error
+2025-12-17T10:28:12.935Z	npm error Run "npm help ci" for more info
+2025-12-17T10:28:12.935Z	npm error A complete log of this run can be found in: /opt/buildhome/.npm/_logs/2025-12-17T10_28_12_086Z-debug-0.log
+2025-12-17T10:28:12.982Z	Failed: error occurred while installing tools or dependencies
