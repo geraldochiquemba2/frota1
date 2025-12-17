@@ -43,8 +43,13 @@ export default function DriverDashboard() {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const watchIdRef = useRef<number | null>(null);
 
+  // Auto-try location on load, but don't block the UI
   useEffect(() => {
-    getCurrentLocation();
+    // Small delay to ensure component is fully mounted
+    const timer = setTimeout(() => {
+      getCurrentLocation();
+    }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   // Fallback: Get location from IP address
@@ -541,15 +546,14 @@ export default function DriverDashboard() {
             <CardContent>
               <form onSubmit={handleStartTrip} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="startLocation">Local de Partida (GPS)</Label>
+                  <Label htmlFor="startLocation">Local de Partida</Label>
                   <div className="flex gap-2">
                     <Input
                       id="startLocation"
-                      placeholder={gettingLocation ? "Obtendo localização..." : "Sua localização atual"}
+                      placeholder={gettingLocation ? "A obter localização..." : "Digite ou clique no ícone GPS"}
                       value={startLocation}
                       onChange={(e) => setStartLocation(e.target.value)}
                       data-testid="input-start-location"
-                      disabled={gettingLocation}
                     />
                     <Button
                       type="button"
@@ -558,13 +562,24 @@ export default function DriverDashboard() {
                       onClick={getCurrentLocation}
                       disabled={gettingLocation}
                       data-testid="button-get-location"
+                      title="Tentar GPS"
                     >
-                      <Navigation className={`h-4 w-4 ${gettingLocation ? "animate-pulse" : ""}`} />
+                      <Navigation className={`h-4 w-4 ${gettingLocation ? "animate-spin" : ""}`} />
                     </Button>
                   </div>
+                  {gettingLocation && (
+                    <p className="text-xs text-muted-foreground animate-pulse">
+                      A tentar obter localização... aguarde até 30 segundos
+                    </p>
+                  )}
                   {gpsCoords && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-green-600 dark:text-green-400">
                       GPS: {gpsCoords.lat.toFixed(4)}, {gpsCoords.lng.toFixed(4)}
+                    </p>
+                  )}
+                  {!gpsCoords && !gettingLocation && (
+                    <p className="text-xs text-muted-foreground">
+                      Pode digitar o local manualmente acima
                     </p>
                   )}
                 </div>
