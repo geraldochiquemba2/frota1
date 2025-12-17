@@ -19,11 +19,10 @@ interface RouteInfo {
   geometry: [number, number][];
 }
 
-async function geocodeLocation(location: string): Promise<Coordinates | null> {
+async function tryGeocode(query: string): Promise<Coordinates | null> {
   try {
-    const query = encodeURIComponent(`${location}, Angola`);
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`
     );
     
     if (!response.ok) return null;
@@ -40,6 +39,28 @@ async function geocodeLocation(location: string): Promise<Coordinates | null> {
     console.error("Geocoding error:", error);
     return null;
   }
+}
+
+async function geocodeLocation(location: string): Promise<Coordinates | null> {
+  const parts = location.split(",").map(p => p.trim()).filter(Boolean);
+  
+  const queries = [
+    `${location}, Angola`,
+    parts.length >= 2 ? `${parts.slice(1).join(", ")}, Angola` : null,
+    parts.length >= 3 ? `${parts.slice(2).join(", ")}, Angola` : null,
+    parts.length >= 1 ? `${parts[parts.length - 1]}, Angola` : null,
+  ].filter(Boolean) as string[];
+  
+  for (const query of queries) {
+    const result = await tryGeocode(query);
+    if (result) {
+      console.log(`Geocoded "${location}" using query "${query}"`);
+      return result;
+    }
+  }
+  
+  console.warn(`Could not geocode location: ${location}`);
+  return null;
 }
 
 async function getRoute(start: Coordinates, end: Coordinates): Promise<RouteInfo | null> {
