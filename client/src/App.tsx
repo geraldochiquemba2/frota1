@@ -23,6 +23,7 @@ import Settings from "@/pages/settings";
 import Landing from "@/pages/landing";
 import DriverDashboard from "@/pages/driver-dashboard";
 import Suppliers from "@/pages/suppliers";
+import Fuel from "@/pages/fuel";
 
 function Router() {
   return (
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/drivers" component={Drivers} />
       <Route path="/map" component={LiveMap} />
       <Route path="/maintenance" component={Maintenance} />
+      <Route path="/fuel" component={Fuel} />
       <Route path="/trips" component={Trips} />
       <Route path="/alerts" component={Alerts} />
       <Route path="/suppliers" component={Suppliers} />

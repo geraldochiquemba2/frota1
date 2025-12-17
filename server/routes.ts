@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertVehicleSchema, insertDriverSchema, insertTripSchema, insertMaintenanceSchema, insertAlertSchema, insertSupplierSchema } from "@shared/schema";
+import { insertVehicleSchema, insertDriverSchema, insertTripSchema, insertMaintenanceSchema, insertAlertSchema, insertSupplierSchema, insertFuelLogSchema } from "@shared/schema";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -667,6 +667,87 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Erro ao excluir fornecedor" });
+    }
+  });
+
+  // ==================== FUEL LOGS ROUTES ====================
+
+  app.get("/api/fuel", async (req, res) => {
+    try {
+      const logs = await storage.getFuelLogs();
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching fuel logs:", error);
+      res.status(500).json({ error: "Erro ao buscar abastecimentos" });
+    }
+  });
+
+  app.get("/api/fuel/stats", async (req, res) => {
+    try {
+      const stats = await storage.getFuelStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching fuel stats:", error);
+      res.status(500).json({ error: "Erro ao buscar estatísticas de combustível" });
+    }
+  });
+
+  app.get("/api/fuel/vehicle/:vehicleId", async (req, res) => {
+    try {
+      const logs = await storage.getFuelLogsByVehicle(req.params.vehicleId);
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar abastecimentos do veículo" });
+    }
+  });
+
+  app.get("/api/fuel/:id", async (req, res) => {
+    try {
+      const log = await storage.getFuelLog(req.params.id);
+      if (!log) {
+        return res.status(404).json({ error: "Abastecimento não encontrado" });
+      }
+      res.json(log);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar abastecimento" });
+    }
+  });
+
+  app.post("/api/fuel", async (req, res) => {
+    try {
+      const parsed = insertFuelLogSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Dados inválidos", details: parsed.error });
+      }
+      const log = await storage.createFuelLog(parsed.data);
+      res.status(201).json(log);
+    } catch (error) {
+      console.error("Error creating fuel log:", error);
+      res.status(500).json({ error: "Erro ao registrar abastecimento" });
+    }
+  });
+
+  app.patch("/api/fuel/:id", async (req, res) => {
+    try {
+      const log = await storage.updateFuelLog(req.params.id, req.body);
+      if (!log) {
+        return res.status(404).json({ error: "Abastecimento não encontrado" });
+      }
+      res.json(log);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao atualizar abastecimento" });
+    }
+  });
+
+  app.delete("/api/fuel/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteFuelLog(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Abastecimento não encontrado" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao excluir abastecimento" });
     }
   });
 

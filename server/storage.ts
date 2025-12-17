@@ -6,7 +6,8 @@ import {
   type Maintenance, type InsertMaintenance,
   type Alert, type InsertAlert,
   type Supplier, type InsertSupplier,
-  adminUsers, vehicles, drivers, trips, maintenance, alerts, suppliers
+  type FuelLog, type InsertFuelLog,
+  adminUsers, vehicles, drivers, trips, maintenance, alerts, suppliers, fuelLogs
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -69,6 +70,20 @@ export interface IStorage {
   createSupplier(supplier: InsertSupplier): Promise<Supplier>;
   updateSupplier(id: string, supplier: Partial<InsertSupplier>): Promise<Supplier | undefined>;
   deleteSupplier(id: string): Promise<boolean>;
+
+  // Fuel Logs
+  getFuelLogs(): Promise<FuelLog[]>;
+  getFuelLog(id: string): Promise<FuelLog | undefined>;
+  getFuelLogsByVehicle(vehicleId: string): Promise<FuelLog[]>;
+  createFuelLog(log: InsertFuelLog): Promise<FuelLog>;
+  updateFuelLog(id: string, log: Partial<InsertFuelLog>): Promise<FuelLog | undefined>;
+  deleteFuelLog(id: string): Promise<boolean>;
+  getFuelStats(): Promise<{
+    totalLiters: number;
+    totalCost: number;
+    avgEfficiency: number;
+    recentLogs: FuelLog[];
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -279,6 +294,86 @@ export class DatabaseStorage implements IStorage {
   async deleteSupplier(id: string): Promise<boolean> {
     const result = await db.delete(suppliers).where(eq(suppliers.id, id)).returning();
     return result.length > 0;
+  }
+
+  // Fuel Logs
+  async getFuelLogs(): Promise<FuelLog[]> {
+    return db.select().from(fuelLogs).orderBy(desc(fuelLogs.date));
+  }
+
+  async getFuelLog(id: string): Promise<FuelLog | undefined> {
+    const [log] = await db.select().from(fuelLogs).where(eq(fuelLogs.id, id));
+    return log;
+  }
+
+  async getFuelLogsByVehicle(vehicleId: string): Promise<FuelLog[]> {
+    return db.select().from(fuelLogs).where(eq(fuelLogs.vehicleId, vehicleId)).orderBy(desc(fuelLogs.date));
+  }
+
+  async createFuelLog(log: InsertFuelLog): Promise<FuelLog> {
+    const [newLog] = await db.insert(fuelLogs).values(log).returning();
+    return newLog;
+  }
+
+  async updateFuelLog(id: string, log: Partial<InsertFuelLog>): Promise<FuelLog | undefined> {
+    const [updated] = await db.update(fuelLogs).set(log).where(eq(fuelLogs.id, id)).returning();
+    return updated;
+  }
+
+  async deleteFuelLog(id: string): Promise<boolean> {
+    const result = await db.delete(fuelLogs).where(eq(fuelLogs.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getFuelStats(): Promise<{
+    totalLiters: number;
+    totalCost: number;
+    avgEfficiency: number;
+    recentLogs: FuelLog[];
+  }> {
+    const allLogs = await db.select().from(fuelLogs).orderBy(desc(fuelLogs.date));
+    
+    const totalLiters = allLogs.reduce((sum, log) => sum + (log.liters || 0), 0);
+    const totalCost = allLogs.reduce((sum, log) => sum + (log.totalCost || 0), 0);
+    
+    // Calculate average efficiency based on consecutive logs per vehicle
+    let totalKm = 0;
+    let totalLitersForEfficiency = 0;
+    
+    // Group logs by vehicle and calculate efficiency
+    const logsByVehicle: { [key: string]: FuelLog[] } = {};
+    for (const log of allLogs) {
+      if (!logsByVehicle[log.vehicleId]) {
+        logsByVehicle[log.vehicleId] = [];
+      }
+      logsByVehicle[log.vehicleId].push(log);
+    }
+    
+    for (const vehicleLogs of Object.values(logsByVehicle)) {
+      // Sort by date ascending for efficiency calculation
+      const sorted = vehicleLogs.sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      
+      for (let i = 1; i < sorted.length; i++) {
+        const kmDiff = sorted[i].odometer - sorted[i - 1].odometer;
+        if (kmDiff > 0 && sorted[i].liters > 0) {
+          totalKm += kmDiff;
+          totalLitersForEfficiency += sorted[i].liters;
+        }
+      }
+    }
+    
+    const avgEfficiency = totalLitersForEfficiency > 0 
+      ? totalKm / totalLitersForEfficiency 
+      : 0;
+    
+    return {
+      totalLiters,
+      totalCost,
+      avgEfficiency,
+      recentLogs: allLogs.slice(0, 5),
+    };
   }
 }
 

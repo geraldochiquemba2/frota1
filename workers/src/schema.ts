@@ -153,3 +153,29 @@ export const insertSupplierSchema = createInsertSchema(suppliers).omit({
 
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type Supplier = typeof suppliers.$inferSelect;
+
+// Fuel Logs table
+export const fuelLogs = pgTable("fuel_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vehicleId: varchar("vehicle_id").notNull(),
+  vehiclePlate: varchar("vehicle_plate", { length: 20 }).notNull(),
+  driverId: varchar("driver_id"),
+  driverName: varchar("driver_name", { length: 200 }),
+  date: timestamp("date").notNull().defaultNow(),
+  odometer: integer("odometer").notNull(),
+  liters: real("liters").notNull(),
+  pricePerLiter: real("price_per_liter").notNull(),
+  totalCost: real("total_cost").notNull(),
+  fuelType: varchar("fuel_type", { length: 30 }),
+  station: varchar("station", { length: 200 }),
+  supplierId: varchar("supplier_id"),
+  notes: text("notes"),
+});
+
+export const insertFuelLogSchema = createInsertSchema(fuelLogs).omit({
+  id: true,
+  date: true,
+});
+
+export type InsertFuelLog = z.infer<typeof insertFuelLogSchema>;
+export type FuelLog = typeof fuelLogs.$inferSelect;
