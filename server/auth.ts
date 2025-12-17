@@ -21,8 +21,10 @@ export function setupAuth(app: Express): void {
     tableName: "sessions",
   });
 
-  // Check if we're using cross-origin (Cloudflare Workers, etc.)
-  const isCrossOrigin = !!process.env.ALLOWED_ORIGINS;
+  // For cross-origin (Cloudflare Workers/Pages), we need sameSite: "none" and secure: true
+  const isProduction = process.env.NODE_ENV === "production";
+  
+  app.set("trust proxy", 1); // Trust first proxy (Cloudflare)
   
   app.use(
     session({
@@ -30,12 +32,12 @@ export function setupAuth(app: Express): void {
       secret: process.env.SESSION_SECRET || "fleettrack-secret-key-2024",
       resave: false,
       saveUninitialized: false,
-      proxy: true, // Trust the reverse proxy (Cloudflare)
+      proxy: true,
       cookie: {
-        secure: process.env.NODE_ENV === "production",
+        secure: isProduction, // Must be true for sameSite: "none"
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        sameSite: isCrossOrigin ? "none" : "lax", // "none" required for cross-origin
+        sameSite: isProduction ? "none" : "lax", // "none" for cross-origin in production
       },
     })
   );

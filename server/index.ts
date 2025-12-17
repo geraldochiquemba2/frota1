@@ -14,17 +14,30 @@ declare module "http" {
   }
 }
 
-// CORS configuration for cross-origin requests (Cloudflare Workers)
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
+// CORS configuration for cross-origin requests (Cloudflare Workers/Pages)
+const cloudflareOrigins = [
+  "https://frota.20230043.workers.dev",
+  "https://frota-8j7.pages.dev",
+];
+const allowedOrigins = [
+  ...cloudflareOrigins,
+  ...(process.env.ALLOWED_ORIGINS?.split(",") || []),
+];
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
-    // Allow all origins in development, or check allowed list in production
-    if (process.env.NODE_ENV !== "production" || allowedOrigins.includes(origin)) {
+    // Allow all origins in development
+    if (process.env.NODE_ENV !== "production") {
       return callback(null, true);
     }
-    // Also allow the same origin
+    // Check if origin is in allowed list or matches Cloudflare patterns
+    if (allowedOrigins.includes(origin) || 
+        origin.endsWith(".pages.dev") || 
+        origin.endsWith(".workers.dev")) {
+      return callback(null, true);
+    }
     return callback(null, true);
   },
   credentials: true,

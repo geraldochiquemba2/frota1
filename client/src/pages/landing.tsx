@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/fleet/ThemeToggle";
 import { Truck, MapPin, Bell, Wrench, Users, BarChart3, Phone, Lock, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { getApiUrl } from "@/lib/auth-token";
 
 const features = [
   {
@@ -55,7 +56,10 @@ export default function Landing() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const apiUrl = getApiUrl();
+      const url = apiUrl ? `${apiUrl}/api/auth/login` : "/api/auth/login";
+      
+      const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -92,7 +96,10 @@ export default function Landing() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/register", {
+      const apiUrl = getApiUrl();
+      const url = apiUrl ? `${apiUrl}/api/auth/register` : "/api/auth/register";
+      
+      const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

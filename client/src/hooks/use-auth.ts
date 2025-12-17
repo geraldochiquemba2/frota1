@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import { getApiUrl } from "@/lib/auth-token";
 
 interface AuthUser {
   id: string;
@@ -9,7 +10,10 @@ interface AuthUser {
 }
 
 async function fetchUser(): Promise<AuthUser | null> {
-  const response = await fetch("/api/auth/user", {
+  const apiUrl = getApiUrl();
+  const url = apiUrl ? `${apiUrl}/api/auth/user` : "/api/auth/user";
+  
+  const response = await fetch(url, {
     credentials: "include",
   });
 
@@ -33,7 +37,10 @@ export function useAuth() {
   });
 
   const login = async (phone: string, password: string) => {
-    const response = await fetch("/api/auth/login", {
+    const apiUrl = getApiUrl();
+    const url = apiUrl ? `${apiUrl}/api/auth/login` : "/api/auth/login";
+    
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -55,7 +62,10 @@ export function useAuth() {
   };
 
   const register = async (phone: string, password: string, name: string) => {
-    const response = await fetch("/api/auth/register", {
+    const apiUrl = getApiUrl();
+    const url = apiUrl ? `${apiUrl}/api/auth/register` : "/api/auth/register";
+    
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -77,7 +87,10 @@ export function useAuth() {
   };
 
   const logout = async () => {
-    await fetch("/api/auth/logout", {
+    const apiUrl = getApiUrl();
+    const url = apiUrl ? `${apiUrl}/api/auth/logout` : "/api/auth/logout";
+    
+    await fetch(url, {
       method: "POST",
       credentials: "include",
     });
