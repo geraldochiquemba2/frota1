@@ -293,8 +293,8 @@ export default function Trips() {
               startLocation={trip.startLocation}
               destination={trip.destination ?? undefined}
               endLocation={trip.endLocation ?? undefined}
-              startTime={trip.startTime?.toISOString() ?? new Date().toISOString()}
-              endTime={trip.endTime?.toISOString()}
+              startTime={trip.startTime ? String(trip.startTime) : new Date().toISOString()}
+              endTime={trip.endTime ? String(trip.endTime) : undefined}
               distance={trip.distance ?? undefined}
               purpose={trip.purpose ?? undefined}
               startLat={trip.startLat ?? undefined}
