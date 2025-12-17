@@ -47,7 +47,7 @@ export default function DriverDashboard() {
     getCurrentLocation();
   }, []);
 
-  const getCurrentLocation = () => {
+  const getCurrentLocation = async () => {
     setGettingLocation(true);
     
     if (!("geolocation" in navigator)) {
@@ -60,65 +60,81 @@ export default function DriverDashboard() {
       return;
     }
 
-    // Try high accuracy first, then fall back to low accuracy
-    const tryGetLocation = (highAccuracy: boolean) => {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          setGpsCoords({ lat: latitude, lng: longitude });
-          try {
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-              { signal: AbortSignal.timeout(10000) }
-            );
-            const data = await response.json();
-            if (data.display_name) {
-              setStartLocation(data.display_name.split(",").slice(0, 3).join(", "));
-            } else {
-              setStartLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-            }
-          } catch {
-            setStartLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-          }
-          setGettingLocation(false);
+    // Check permission status first (if API available)
+    if ("permissions" in navigator) {
+      try {
+        const permission = await navigator.permissions.query({ name: "geolocation" });
+        if (permission.state === "denied") {
           toast({
-            title: "Localização obtida",
-            description: "Pode editar o local se necessário",
-          });
-        },
-        (error) => {
-          // If high accuracy failed, try with low accuracy
-          if (highAccuracy) {
-            tryGetLocation(false);
-            return;
-          }
-          
-          // Both attempts failed
-          let errorMessage = "Digite o local de partida manualmente";
-          if (error.code === error.PERMISSION_DENIED) {
-            errorMessage = "Permissão de GPS negada. Ative nas configurações do navegador.";
-          } else if (error.code === error.POSITION_UNAVAILABLE) {
-            errorMessage = "GPS indisponível. Digite o local manualmente.";
-          } else if (error.code === error.TIMEOUT) {
-            errorMessage = "GPS demorou muito. Digite o local manualmente.";
-          }
-          
-          toast({
-            title: "Localização não obtida",
-            description: errorMessage,
+            title: "GPS bloqueado",
+            description: "Ative a localização nas configurações do navegador e recarregue a página",
             variant: "destructive",
           });
           setGettingLocation(false);
-        },
-        { 
-          enableHighAccuracy: highAccuracy, 
-          timeout: highAccuracy ? 15000 : 30000,
-          maximumAge: 60000
+          return;
         }
-      );
+      } catch {
+        // Permissions API not fully supported, continue anyway
+      }
+    }
+
+    const getLocationPromise = (highAccuracy: boolean): Promise<GeolocationPosition> => {
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: highAccuracy,
+          timeout: highAccuracy ? 10000 : 20000,
+          maximumAge: 30000
+        });
+      });
     };
 
-    tryGetLocation(true);
+    try {
+      // Try high accuracy first
+      let position: GeolocationPosition;
+      try {
+        position = await getLocationPromise(true);
+      } catch {
+        // Fall back to low accuracy
+        position = await getLocationPromise(false);
+      }
+
+      const { latitude, longitude } = position.coords;
+      setGpsCoords({ lat: latitude, lng: longitude });
+      
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+          { signal: AbortSignal.timeout(8000) }
+        );
+        const data = await response.json();
+        if (data.display_name) {
+          setStartLocation(data.display_name.split(",").slice(0, 3).join(", "));
+        } else {
+          setStartLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+        }
+      } catch {
+        setStartLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+      }
+      setGettingLocation(false);
+    } catch (error) {
+      const geoError = error as GeolocationPositionError;
+      let errorMessage = "Digite o local de partida manualmente";
+      
+      if (geoError.code === 1) { // PERMISSION_DENIED
+        errorMessage = "Ative a localização nas configurações do navegador";
+      } else if (geoError.code === 2) { // POSITION_UNAVAILABLE
+        errorMessage = "GPS indisponível. Digite o local manualmente.";
+      } else if (geoError.code === 3) { // TIMEOUT
+        errorMessage = "GPS demorou muito. Digite o local manualmente.";
+      }
+      
+      toast({
+        title: "Localização não obtida",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      setGettingLocation(false);
+    }
   };
 
   const { data: profile, isLoading: profileLoading } = useQuery<Driver>({
