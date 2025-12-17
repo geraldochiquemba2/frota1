@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getProvinces, getMunicipalities, getNeighborhoods } from "@/data/angola-locations";
+import { RouteMap } from "@/components/RouteMap";
 import { 
   Car, 
   MapPin, 
@@ -723,114 +724,7 @@ export default function DriverDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {/* HTTPS Required Warning */}
-              {!window.isSecureContext && (
-                <div className="mb-6 p-4 rounded-md bg-amber-500/10 border border-amber-500/30">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-amber-700 dark:text-amber-300">GPS requer site publicado (HTTPS)</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        O GPS não funciona no modo de desenvolvimento. Para usar o GPS:
-                      </p>
-                      <ol className="text-sm text-muted-foreground mt-2 list-decimal list-inside space-y-1">
-                        <li>Publique a aplicação (botão "Deploy" na Replit)</li>
-                        <li>Abra o link publicado (.replit.app) no telemóvel</li>
-                        <li>O GPS vai funcionar automaticamente</li>
-                      </ol>
-                    </div>
-                  </div>
-                </div>
-              )}
 
-              {/* GPS Permission Request - Like Google Maps */}
-              {window.isSecureContext && (gpsStatus === "needs_permission" || (gpsStatus === "error" && permissionState !== "denied")) && !gpsCoords && (
-                <div className="mb-6 p-4 rounded-md bg-blue-500/10 border border-blue-500/30">
-                  <div className="text-center space-y-3">
-                    <div className="mx-auto w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <Navigation className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-blue-700 dark:text-blue-300">Ativar Localização GPS</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Clique no botão abaixo para permitir o rastreamento da sua localização em tempo real.
-                      </p>
-                    </div>
-                    <Button 
-                      type="button"
-                      size="lg"
-                      className="w-full"
-                      onClick={requestGpsPermission}
-                      data-testid="button-enable-gps"
-                    >
-                      <Navigation className="h-5 w-5 mr-2" />
-                      Ativar GPS Agora
-                    </Button>
-                    {gpsError && (
-                      <p className="text-sm text-destructive mt-2">{gpsError}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* GPS Requesting State */}
-              {gpsStatus === "requesting" && !gpsCoords && (
-                <div className="mb-6 p-4 rounded-md bg-blue-500/10 border border-blue-500/30">
-                  <div className="text-center space-y-3">
-                    <div className="mx-auto w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <Loader2 className="h-6 w-6 text-blue-600 dark:text-blue-400 animate-spin" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-blue-700 dark:text-blue-300">A obter localização...</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Por favor aceite a permissão de localização quando o navegador perguntar.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* GPS Denied Error */}
-              {permissionState === "denied" && (
-                <div className="mb-6 p-4 rounded-md bg-destructive/10 border border-destructive/30">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-destructive">GPS Bloqueado</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        O GPS foi bloqueado. Para ativar:
-                      </p>
-                      <ol className="text-sm text-muted-foreground mt-2 list-decimal list-inside space-y-1">
-                        <li>Abra as Configurações do navegador</li>
-                        <li>Procure por "Permissões do site" ou "Localização"</li>
-                        <li>Permita este site aceder à localização</li>
-                        <li>Recarregue a página</li>
-                      </ol>
-                      <Button 
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="mt-3"
-                        onClick={() => window.location.reload()}
-                      >
-                        Recarregar Página
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* GPS Active Success */}
-              {gpsCoords && (
-                <div className={`mb-4 p-3 rounded-md text-sm ${usingIpLocation ? 'bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400' : 'bg-green-500/10 border border-green-500/30 text-green-700 dark:text-green-400'}`}>
-                  <div className="flex items-center gap-2">
-                    <div className={`h-2 w-2 rounded-full animate-pulse ${usingIpLocation ? 'bg-amber-500' : 'bg-green-500'}`} />
-                    <Navigation className="h-4 w-4" />
-                    <span className="font-medium">{usingIpLocation ? 'Localização por IP (aproximada):' : 'GPS Ativo:'}</span>
-                    <span>{gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}</span>
-                  </div>
-                </div>
-              )}
 
               <form onSubmit={handleStartTrip} className="space-y-4">
                 <div className="space-y-2">
@@ -965,6 +859,18 @@ export default function DriverDashboard() {
                     </p>
                   )}
                 </div>
+
+                {/* Route Map */}
+                {startLocation && destination && (
+                  <div className="space-y-2">
+                    <Label>Rota e Distância</Label>
+                    <RouteMap 
+                      startLocation={startLocation} 
+                      destination={destination} 
+                    />
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="purpose">Motivo da Viagem</Label>
                   <Input
