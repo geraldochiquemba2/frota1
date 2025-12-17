@@ -68,11 +68,14 @@ export default function Landing() {
       }
 
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
       
       toast({
         title: "Login realizado",
         description: "Bem-vindo ao FleetTrack!",
       });
+      
+      window.location.reload();
     } catch (error) {
       toast({
         title: "Erro no login",
@@ -102,11 +105,14 @@ export default function Landing() {
       }
 
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
       
       toast({
         title: "Conta criada",
         description: "Bem-vindo ao FleetTrack!",
       });
+      
+      window.location.reload();
     } catch (error) {
       toast({
         title: "Erro no cadastro",
