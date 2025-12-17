@@ -363,12 +363,19 @@ export default function DriverDashboard() {
     queryKey: ["/api/driver/vehicle"],
   });
 
-  // Pre-fill odometer with vehicle's current odometer
+  // Pre-fill odometer with vehicle's current odometer when vehicle loads
+  const [odometerManuallyEdited, setOdometerManuallyEdited] = useState(false);
+  
   useEffect(() => {
-    if (vehicle?.odometer !== undefined && vehicle?.odometer !== null && startOdometer === "") {
+    if (vehicle?.odometer !== undefined && vehicle?.odometer !== null && !odometerManuallyEdited) {
       setStartOdometer(vehicle.odometer.toString());
     }
-  }, [vehicle?.odometer, startOdometer]);
+  }, [vehicle?.odometer, odometerManuallyEdited]);
+  
+  // Reset manual edit flag when vehicle changes
+  useEffect(() => {
+    setOdometerManuallyEdited(false);
+  }, [vehicle?.id]);
 
   const startTripMutation = useMutation({
     mutationFn: async (data: { 
@@ -400,6 +407,7 @@ export default function DriverDashboard() {
       setSelectedNeighborhood("");
       setPurpose("");
       setStartOdometer("");
+      setOdometerManuallyEdited(false);
       toast({
         title: "Viagem iniciada",
         description: "Boa viagem! A central pode ver sua localização e rota.",
@@ -945,7 +953,10 @@ export default function DriverDashboard() {
                     type="number"
                     placeholder="Quilometragem atual do veículo"
                     value={startOdometer}
-                    onChange={(e) => setStartOdometer(e.target.value)}
+                    onChange={(e) => {
+                      setStartOdometer(e.target.value);
+                      setOdometerManuallyEdited(true);
+                    }}
                     data-testid="input-start-odometer"
                   />
                 </div>
