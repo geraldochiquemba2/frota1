@@ -24,25 +24,37 @@ export function getApiUrl(): string {
   if (typeof window !== 'undefined') {
     const storedUrl = localStorage.getItem(API_URL_KEY);
     if (storedUrl && storedUrl.trim() !== '') {
+      console.log("[API URL Debug] Using stored URL:", storedUrl);
       return storedUrl;
     }
   }
   
   // Check Vite env var
   if (import.meta.env.VITE_API_URL) {
+    console.log("[API URL Debug] Using VITE_API_URL:", import.meta.env.VITE_API_URL);
     return import.meta.env.VITE_API_URL;
   }
   
   // Check if running on Cloudflare Pages or any non-localhost domain
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
+    console.log("[API URL Debug] Current hostname:", hostname);
+    
+    // If already on the workers domain, use relative URLs
+    if (hostname === 'frota.20230043.workers.dev') {
+      console.log("[API URL Debug] On workers domain, using relative URLs");
+      return "";
+    }
+    
     if (hostname.includes('.pages.dev') || 
         hostname.includes('.workers.dev') ||
         (hostname !== 'localhost' && !hostname.startsWith('127.') && !hostname.includes('replit'))) {
+      console.log("[API URL Debug] Production detected, using Cloudflare API URL");
       return CLOUDFLARE_API_URL;
     }
   }
   
+  console.log("[API URL Debug] Using local/relative URLs");
   return "";
 }
 

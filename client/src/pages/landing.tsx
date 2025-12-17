@@ -73,13 +73,22 @@ export default function Landing() {
 
       const data = await response.json();
       
+      console.log("[Login Debug] Response data:", { ...data, token: data.token ? "exists" : "missing" });
+      
       // Store the JWT token
       if (data.token) {
         setToken(data.token);
+        console.log("[Login Debug] Token stored in localStorage");
+      } else {
+        console.warn("[Login Debug] No token in response! Authentication may fail.");
       }
 
+      // Small delay to ensure localStorage is synced
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
+      
+      console.log("[Login Debug] Query invalidated, reloading page...");
       
       toast({
         title: "Login realizado",
