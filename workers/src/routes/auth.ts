@@ -147,9 +147,13 @@ authRoutes.post("/login", async (c) => {
     }
 
     return c.json({ error: "Credenciais inválidas" }, 401);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Login error:", error);
-    return c.json({ error: "Erro ao fazer login" }, 500);
+    const errorMessage = error?.message || String(error);
+    return c.json({ 
+      error: "Erro ao fazer login", 
+      details: errorMessage 
+    }, 500);
   }
 });
 
