@@ -55,19 +55,32 @@ export default function DriverDashboard() {
   // Check permission state on mount
   useEffect(() => {
     const checkPermission = async () => {
+      // Check secure context first
+      if (!window.isSecureContext) {
+        console.error("GPS: Not a secure context (HTTPS required)");
+        setGpsStatus("error");
+        setGpsError(`Site não seguro (HTTP). Abra: ${window.location.origin.replace('http:', 'https:')}`);
+        return;
+      }
+      
       if (!("geolocation" in navigator)) {
+        console.error("GPS: Geolocation API not available");
         setGpsStatus("error");
         setGpsError("Este navegador não suporta GPS");
         return;
       }
       
+      console.log("GPS: Checking permission state...");
+      
       try {
         if ("permissions" in navigator) {
           const result = await navigator.permissions.query({ name: "geolocation" });
+          console.log("GPS: Permission state:", result.state);
           setPermissionState(result.state as "prompt" | "granted" | "denied");
           
           if (result.state === "granted") {
             // Already have permission, start tracking
+            console.log("GPS: Permission already granted, starting tracking...");
             startGpsTracking();
           } else if (result.state === "denied") {
             setGpsStatus("error");
@@ -76,13 +89,15 @@ export default function DriverDashboard() {
           
           // Listen for permission changes
           result.addEventListener("change", () => {
+            console.log("GPS: Permission changed to:", result.state);
             setPermissionState(result.state as "prompt" | "granted" | "denied");
             if (result.state === "granted") {
               startGpsTracking();
             }
           });
         }
-      } catch {
+      } catch (e) {
+        console.log("GPS: Permissions API not supported, will need user click", e);
         // Permissions API not supported, will need user click
         setPermissionState("prompt");
       }
@@ -93,6 +108,23 @@ export default function DriverDashboard() {
 
   // Request GPS permission - MUST be triggered by user click (like Google Maps)
   const requestGpsPermission = () => {
+    console.log("GPS: User clicked to request permission");
+    console.log("GPS: Secure context?", window.isSecureContext);
+    console.log("GPS: Protocol:", window.location.protocol);
+    console.log("GPS: Geolocation available?", "geolocation" in navigator);
+    
+    if (!window.isSecureContext) {
+      const httpsUrl = window.location.href.replace('http:', 'https:');
+      setGpsStatus("error");
+      setGpsError(`O GPS requer HTTPS. Copie e abra este link: ${httpsUrl}`);
+      toast({
+        title: "Site não seguro",
+        description: "Abra o site usando HTTPS para o GPS funcionar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!("geolocation" in navigator)) {
       setGpsStatus("error");
       setGpsError("GPS não suportado neste navegador. Use Chrome ou Safari.");
@@ -106,26 +138,29 @@ export default function DriverDashboard() {
 
     setGpsStatus("requesting");
     setGpsError(null);
+    
+    console.log("GPS: Calling getCurrentPosition...");
 
     // First, use getCurrentPosition to trigger the permission popup (requires user gesture)
     navigator.geolocation.getCurrentPosition(
       (position) => {
         // Permission granted! Now start continuous tracking
-        const { latitude, longitude } = position.coords;
+        const { latitude, longitude, accuracy } = position.coords;
+        console.log("GPS: Success!", latitude, longitude, "accuracy:", accuracy);
         setGpsCoords({ lat: latitude, lng: longitude });
         setGpsStatus("active");
         setPermissionState("granted");
         
         toast({
           title: "GPS ativo",
-          description: "A localização está a ser rastreada em tempo real.",
+          description: `Localização obtida (precisão: ${Math.round(accuracy)}m)`,
         });
         
         // Start continuous tracking
         startGpsTracking();
       },
       (error) => {
-        console.error("GPS permission error:", error.code, error.message);
+        console.error("GPS: Error!", error.code, error.message);
         setGpsStatus("error");
         
         switch (error.code) {
@@ -148,9 +183,14 @@ export default function DriverDashboard() {
             break;
           case 3: // TIMEOUT
             setGpsError("GPS demorou muito. Tente ao ar livre ou perto de uma janela.");
+            toast({
+              title: "GPS demorou muito",
+              description: "Tente ao ar livre ou perto de uma janela.",
+              variant: "destructive",
+            });
             break;
           default:
-            setGpsError(error.message || "Erro de GPS desconhecido");
+            setGpsError(`Erro: ${error.message || "desconhecido"} (código ${error.code})`);
         }
       },
       {
@@ -592,8 +632,28 @@ export default function DriverDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {/* HTTPS Required Warning */}
+              {!window.isSecureContext && (
+                <div className="mb-6 p-4 rounded-md bg-amber-500/10 border border-amber-500/30">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-amber-700 dark:text-amber-300">GPS requer site publicado (HTTPS)</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        O GPS não funciona no modo de desenvolvimento. Para usar o GPS:
+                      </p>
+                      <ol className="text-sm text-muted-foreground mt-2 list-decimal list-inside space-y-1">
+                        <li>Publique a aplicação (botão "Deploy" na Replit)</li>
+                        <li>Abra o link publicado (.replit.app) no telemóvel</li>
+                        <li>O GPS vai funcionar automaticamente</li>
+                      </ol>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* GPS Permission Request - Like Google Maps */}
-              {(gpsStatus === "needs_permission" || (gpsStatus === "error" && permissionState !== "denied")) && !gpsCoords && (
+              {window.isSecureContext && (gpsStatus === "needs_permission" || (gpsStatus === "error" && permissionState !== "denied")) && !gpsCoords && (
                 <div className="mb-6 p-4 rounded-md bg-blue-500/10 border border-blue-500/30">
                   <div className="text-center space-y-3">
                     <div className="mx-auto w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
