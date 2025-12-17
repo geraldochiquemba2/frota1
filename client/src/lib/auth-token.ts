@@ -21,6 +21,10 @@ export function getApiUrl(): string {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
+  // Check if running on Cloudflare Pages (not localhost)
+  if (typeof window !== 'undefined' && window.location.hostname.includes('.pages.dev')) {
+    return "https://frota.20230043.workers.dev";
+  }
   return "";
 }
 
