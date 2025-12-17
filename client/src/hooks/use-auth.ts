@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { getToken, getApiUrl, removeToken, setToken } from "@/lib/auth-token";
 import { queryClient } from "@/lib/queryClient";
 
 interface AuthUser {
@@ -10,23 +9,11 @@ interface AuthUser {
 }
 
 async function fetchUser(): Promise<AuthUser | null> {
-  const token = getToken();
-  
-  if (!token) {
-    return null;
-  }
-  
-  const apiUrl = getApiUrl();
-  const url = apiUrl ? `${apiUrl}/api/auth/user` : "/api/auth/user";
-  
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+  const response = await fetch("/api/auth/user", {
+    credentials: "include",
   });
 
   if (response.status === 401) {
-    removeToken();
     return null;
   }
 
@@ -46,14 +33,12 @@ export function useAuth() {
   });
 
   const login = async (phone: string, password: string) => {
-    const apiUrl = getApiUrl();
-    const url = apiUrl ? `${apiUrl}/api/auth/login` : "/api/auth/login";
-    
-    const response = await fetch(url, {
+    const response = await fetch("/api/auth/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify({ phone, password }),
     });
 
@@ -64,24 +49,18 @@ export function useAuth() {
 
     const data = await response.json();
     
-    if (data.token) {
-      setToken(data.token);
-    }
-    
     queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     
     return data;
   };
 
   const register = async (phone: string, password: string, name: string) => {
-    const apiUrl = getApiUrl();
-    const url = apiUrl ? `${apiUrl}/api/auth/register` : "/api/auth/register";
-    
-    const response = await fetch(url, {
+    const response = await fetch("/api/auth/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify({ phone, password, name }),
     });
 
@@ -92,17 +71,16 @@ export function useAuth() {
 
     const data = await response.json();
     
-    if (data.token) {
-      setToken(data.token);
-    }
-    
     queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     
     return data;
   };
 
   const logout = async () => {
-    removeToken();
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
     queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
   };
 
