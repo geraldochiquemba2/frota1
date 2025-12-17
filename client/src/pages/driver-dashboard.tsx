@@ -47,121 +47,103 @@ export default function DriverDashboard() {
     getCurrentLocation();
   }, []);
 
+  // Fallback: Get location from IP address
+  const getLocationFromIP = async (): Promise<{ lat: number; lng: number; city: string } | null> => {
+    try {
+      const response = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(10000) });
+      const data = await response.json();
+      if (data.latitude && data.longitude) {
+        return {
+          lat: data.latitude,
+          lng: data.longitude,
+          city: data.city || data.region || "Localização aproximada"
+        };
+      }
+    } catch (e) {
+      console.log("IP geolocation failed:", e);
+    }
+    return null;
+  };
+
   const getCurrentLocation = async () => {
     setGettingLocation(true);
     
-    if (!("geolocation" in navigator)) {
-      toast({
-        title: "GPS não suportado",
-        description: "Digite o local de partida manualmente",
-        variant: "destructive",
-      });
-      setGettingLocation(false);
-      return;
-    }
-
-    // Check if we're on HTTPS (required for geolocation on mobile)
-    const isSecure = window.location.protocol === "https:" || window.location.hostname === "localhost";
-    if (!isSecure) {
-      toast({
-        title: "Conexão não segura",
-        description: "O GPS requer uma conexão HTTPS. Digite o local manualmente.",
-        variant: "destructive",
-      });
-      setGettingLocation(false);
-      return;
-    }
-
-    const getLocationPromise = (highAccuracy: boolean, timeoutMs: number): Promise<GeolocationPosition> => {
-      return new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: highAccuracy,
-          timeout: timeoutMs,
-          maximumAge: 60000
+    // First, try native GPS
+    if ("geolocation" in navigator) {
+      const getLocationPromise = (highAccuracy: boolean, timeoutMs: number): Promise<GeolocationPosition> => {
+        return new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: highAccuracy,
+            timeout: timeoutMs,
+            maximumAge: 120000
+          });
         });
-      });
-    };
+      };
 
-    const tryGetLocation = async (): Promise<GeolocationPosition | null> => {
-      // Strategy 1: High accuracy with longer timeout (good for mobile)
-      try {
-        return await getLocationPromise(true, 30000);
-      } catch (e) {
-        console.log("High accuracy GPS failed, trying low accuracy...", e);
-      }
-      
-      // Strategy 2: Low accuracy (faster, uses WiFi/cell towers)
-      try {
-        return await getLocationPromise(false, 20000);
-      } catch (e) {
-        console.log("Low accuracy GPS also failed", e);
-      }
-      
-      // Strategy 3: One more attempt with minimal settings
-      try {
-        return await getLocationPromise(false, 15000);
-      } catch (e) {
-        console.log("Final GPS attempt failed", e);
-      }
-      
-      return null;
-    };
-
-    try {
-      const position = await tryGetLocation();
-      
-      if (!position) {
-        toast({
-          title: "GPS não disponível",
-          description: "Verifique se o GPS do telemóvel está ativo e se deu permissão ao navegador. Pode digitar o local manualmente.",
-          variant: "destructive",
-        });
-        setGettingLocation(false);
-        return;
-      }
-
-      const { latitude, longitude } = position.coords;
-      setGpsCoords({ lat: latitude, lng: longitude });
-      
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-          { signal: AbortSignal.timeout(10000) }
-        );
-        const data = await response.json();
-        if (data.display_name) {
-          setStartLocation(data.display_name.split(",").slice(0, 3).join(", "));
-        } else {
-          setStartLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+      // Try GPS with multiple strategies
+      for (const attempt of [
+        { highAccuracy: true, timeout: 20000 },
+        { highAccuracy: false, timeout: 15000 },
+        { highAccuracy: false, timeout: 10000 }
+      ]) {
+        try {
+          const position = await getLocationPromise(attempt.highAccuracy, attempt.timeout);
+          const { latitude, longitude } = position.coords;
+          setGpsCoords({ lat: latitude, lng: longitude });
+          
+          // Get address from coordinates
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+              { signal: AbortSignal.timeout(8000) }
+            );
+            const data = await response.json();
+            if (data.display_name) {
+              setStartLocation(data.display_name.split(",").slice(0, 3).join(", "));
+            } else {
+              setStartLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+            }
+          } catch {
+            setStartLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+          }
+          
+          toast({
+            title: "Localização obtida",
+            description: "GPS detectou a sua posição.",
+          });
+          setGettingLocation(false);
+          return;
+        } catch (e) {
+          console.log(`GPS attempt failed (highAccuracy=${attempt.highAccuracy}):`, e);
         }
-      } catch {
-        setStartLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
       }
-      
-      toast({
-        title: "Localização obtida",
-        description: "O GPS detectou a sua posição com sucesso.",
-      });
-      setGettingLocation(false);
-    } catch (error) {
-      const geoError = error as GeolocationPositionError;
-      let errorMessage = "Digite o local de partida manualmente";
-      
-      if (geoError.code === 1) { // PERMISSION_DENIED
-        errorMessage = "Por favor, ative a localização nas configurações do navegador/telemóvel e recarregue a página";
-      } else if (geoError.code === 2) { // POSITION_UNAVAILABLE
-        errorMessage = "GPS indisponível. Verifique se o GPS do telemóvel está ativo.";
-      } else if (geoError.code === 3) { // TIMEOUT
-        errorMessage = "GPS demorou muito. Tente novamente ou digite o local manualmente.";
-      }
-      
-      toast({
-        title: "Localização não obtida",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      setGettingLocation(false);
     }
+
+    // GPS failed - try IP-based fallback
+    toast({
+      title: "GPS não respondeu",
+      description: "A tentar localização aproximada por internet...",
+    });
+    
+    const ipLocation = await getLocationFromIP();
+    if (ipLocation) {
+      setGpsCoords({ lat: ipLocation.lat, lng: ipLocation.lng });
+      setStartLocation(ipLocation.city);
+      toast({
+        title: "Localização aproximada obtida",
+        description: `Localização por internet: ${ipLocation.city}. Pode editar se necessário.`,
+      });
+      setGettingLocation(false);
+      return;
+    }
+
+    // All methods failed
+    toast({
+      title: "Não foi possível obter localização",
+      description: "Verifique: 1) GPS do telemóvel ligado 2) Permissão dada ao navegador 3) Estar ao ar livre ajuda. Digite manualmente.",
+      variant: "destructive",
+    });
+    setGettingLocation(false);
   };
 
   const { data: profile, isLoading: profileLoading } = useQuery<Driver>({
