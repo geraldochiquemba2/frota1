@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { getProvinces, getMunicipalities, getNeighborhoods } from "@/data/angola-locations";
 import { 
   Car, 
   MapPin, 
@@ -34,10 +36,26 @@ export default function DriverDashboard() {
   const { toast } = useToast();
   const [startLocation, setStartLocation] = useState("");
   const [destination, setDestination] = useState("");
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedMunicipality, setSelectedMunicipality] = useState("");
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState("");
   const [purpose, setPurpose] = useState("");
   const [startOdometer, setStartOdometer] = useState("");
   const [endLocation, setEndLocation] = useState("");
   const [endOdometer, setEndOdometer] = useState("");
+  
+  const provinces = getProvinces();
+  const municipalities = selectedProvince ? getMunicipalities(selectedProvince) : [];
+  const neighborhoods = selectedProvince && selectedMunicipality 
+    ? getNeighborhoods(selectedProvince, selectedMunicipality) 
+    : [];
+
+  useEffect(() => {
+    const parts = [selectedNeighborhood, selectedMunicipality, selectedProvince].filter(Boolean);
+    if (parts.length > 0) {
+      setDestination(parts.join(", "));
+    }
+  }, [selectedProvince, selectedMunicipality, selectedNeighborhood]);
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsStatus, setGpsStatus] = useState<"needs_permission" | "requesting" | "active" | "error" | "ip_fallback">("needs_permission");
   const [gpsError, setGpsError] = useState<string | null>(null);
@@ -338,6 +356,9 @@ export default function DriverDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
       setStartLocation("");
       setDestination("");
+      setSelectedProvince("");
+      setSelectedMunicipality("");
+      setSelectedNeighborhood("");
       setPurpose("");
       setStartOdometer("");
       toast({
@@ -816,15 +837,70 @@ export default function DriverDashboard() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="destination">Destino *</Label>
-                  <Input
-                    id="destination"
-                    placeholder="Para onde você vai?"
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    data-testid="input-destination"
-                    required
-                  />
+                  <Label>Destino *</Label>
+                  <div className="grid gap-2">
+                    <Select 
+                      value={selectedProvince} 
+                      onValueChange={(value) => {
+                        setSelectedProvince(value);
+                        setSelectedMunicipality("");
+                        setSelectedNeighborhood("");
+                      }}
+                    >
+                      <SelectTrigger data-testid="select-province">
+                        <SelectValue placeholder="Selecione a Província" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {provinces.map((province) => (
+                          <SelectItem key={province} value={province}>
+                            {province}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select 
+                      value={selectedMunicipality} 
+                      onValueChange={(value) => {
+                        setSelectedMunicipality(value);
+                        setSelectedNeighborhood("");
+                      }}
+                      disabled={!selectedProvince}
+                    >
+                      <SelectTrigger data-testid="select-municipality">
+                        <SelectValue placeholder="Selecione o Município" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {municipalities.map((municipality) => (
+                          <SelectItem key={municipality} value={municipality}>
+                            {municipality}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select 
+                      value={selectedNeighborhood} 
+                      onValueChange={setSelectedNeighborhood}
+                      disabled={!selectedMunicipality}
+                    >
+                      <SelectTrigger data-testid="select-neighborhood">
+                        <SelectValue placeholder="Selecione o Bairro" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {neighborhoods.map((neighborhood) => (
+                          <SelectItem key={neighborhood} value={neighborhood}>
+                            {neighborhood}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {destination && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Destino: {destination}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="purpose">Motivo da Viagem</Label>
