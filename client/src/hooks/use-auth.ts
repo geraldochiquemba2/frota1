@@ -110,18 +110,25 @@ export function useAuth() {
   };
 
   const logout = async () => {
-    const apiUrl = getApiUrl();
-    const url = apiUrl ? `${apiUrl}/api/auth/logout` : "/api/auth/logout";
-    
-    await fetch(url, {
-      method: "POST",
-      credentials: "include",
-    });
-    
-    // Remove the stored token
+    // Remove the stored token first - this is the most important step
     removeToken();
     
+    // Clear the query cache immediately
+    queryClient.setQueryData(["/api/auth/user"], null);
     queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    
+    // Try to call the backend logout (optional, may fail on some hosts)
+    try {
+      const apiUrl = getApiUrl();
+      const url = apiUrl ? `${apiUrl}/api/auth/logout` : "/api/auth/logout";
+      
+      await fetch(url, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // Ignore errors - token is already removed locally
+    }
   };
 
   return {
