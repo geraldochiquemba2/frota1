@@ -14,6 +14,51 @@ Este documento explica como fazer o deploy da aplicação FleetTrack no Cloudfla
 2. Wrangler CLI instalado: `npm install -g wrangler`
 3. Base de dados Neon PostgreSQL (https://neon.tech)
 
+---
+
+## Método 1: Deploy via GitHub (Recomendado)
+
+### Opção A: Integração Nativa do Cloudflare (Mais Simples)
+
+1. Acesse https://dash.cloudflare.com
+2. Vá para **Workers & Pages** → **Create application** → **Import a repository**
+3. Instale o app "Cloudflare Workers & Pages" no GitHub e autorize
+4. Selecione o repositório do projeto
+5. Configure:
+   - **Root directory**: `workers`
+   - **Build command**: `npm install`
+   - **Deploy command**: `wrangler deploy`
+6. Adicione os secrets no dashboard do Cloudflare:
+   - `DATABASE_URL`: String de conexão do Neon
+   - `JWT_SECRET`: Chave secreta para JWT
+
+Cada push no branch `main` fará deploy automático!
+
+### Opção B: GitHub Actions (Mais Controle)
+
+O arquivo `.github/workflows/deploy-workers.yml` já está configurado.
+
+**Passos para ativar:**
+
+1. No Cloudflare Dashboard, vá em **My Profile** → **API Tokens** → **Create Token**
+2. Use o template **Edit Cloudflare Workers** e copie o token
+3. No GitHub, vá em **Settings** → **Secrets and variables** → **Actions**
+4. Adicione os secrets:
+   - `CLOUDFLARE_API_TOKEN`: Token da API do Cloudflare
+   - `CLOUDFLARE_ACCOUNT_ID`: ID da conta (encontrado no dashboard)
+5. Configure os secrets do Worker via CLI:
+   ```bash
+   cd workers && wrangler login
+   wrangler secret put DATABASE_URL
+   wrangler secret put JWT_SECRET
+   ```
+
+Cada push na pasta `workers/` ou `shared/` fará deploy automático!
+
+---
+
+## Método 2: Deploy Manual via CLI
+
 ## Passo 1: Configurar Secrets no Workers
 
 ```bash
