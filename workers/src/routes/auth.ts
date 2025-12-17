@@ -70,17 +70,20 @@ authRoutes.post("/register", async (c) => {
 
 authRoutes.post("/login", async (c) => {
   try {
+    console.log("[Login] Login attempt started");
+    
     // Debug: Check if environment variables are available
     if (!c.env.DATABASE_URL) {
-      console.error("DATABASE_URL is not defined");
+      console.error("[Login] DATABASE_URL is not defined");
       return c.json({ error: "Configuração do servidor incompleta: DATABASE_URL" }, 500);
     }
     if (!c.env.JWT_SECRET) {
-      console.error("JWT_SECRET is not defined");
+      console.error("[Login] JWT_SECRET is not defined");
       return c.json({ error: "Configuração do servidor incompleta: JWT_SECRET" }, 500);
     }
 
     const { phone, password } = await c.req.json();
+    console.log("[Login] Attempting login for phone:", phone);
 
     if (!phone || !password) {
       return c.json({ error: "Número e senha são obrigatórios" }, 400);
@@ -95,8 +98,10 @@ authRoutes.post("/login", async (c) => {
       .limit(1);
 
     if (adminUser) {
+      console.log("[Login] Admin user found:", adminUser.id);
       const isValidPassword = await verifyPassword(password, adminUser.password);
       if (isValidPassword || adminUser.password === password) {
+        console.log("[Login] Admin password valid, generating token");
         const token = await createToken(
           {
             userId: adminUser.id,
@@ -107,6 +112,7 @@ authRoutes.post("/login", async (c) => {
           c.env.JWT_SECRET
         );
 
+        console.log("[Login] Admin login successful, token generated (length:", token.length, ")");
         return c.json({
           id: adminUser.id,
           phone: adminUser.phone,
@@ -124,8 +130,10 @@ authRoutes.post("/login", async (c) => {
       .limit(1);
 
     if (driver && driver.password) {
+      console.log("[Login] Driver found:", driver.id);
       const isValidPassword = await verifyPassword(password, driver.password);
       if (isValidPassword || driver.password === password) {
+        console.log("[Login] Driver password valid, generating token");
         const token = await createToken(
           {
             userId: driver.id,
@@ -136,6 +144,7 @@ authRoutes.post("/login", async (c) => {
           c.env.JWT_SECRET
         );
 
+        console.log("[Login] Driver login successful, token generated (length:", token.length, ")");
         return c.json({
           id: driver.id,
           phone: driver.phone,
@@ -146,6 +155,7 @@ authRoutes.post("/login", async (c) => {
       }
     }
 
+    console.log("[Login] Login failed - no matching user or invalid password");
     return c.json({ error: "Credenciais inválidas" }, 401);
   } catch (error: any) {
     console.error("Login error:", error);
@@ -164,17 +174,24 @@ authRoutes.post("/logout", async (c) => {
 authRoutes.get("/user", async (c) => {
   try {
     const authHeader = c.req.header("Authorization");
+    console.log("[GetUser] Request received, Authorization header present:", !!authHeader);
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.log("[GetUser] No valid Authorization header found");
       return c.json({ error: "Não autenticado" }, 401);
     }
 
     const token = authHeader.substring(7);
+    console.log("[GetUser] Token received (length:", token.length, ")");
+    
     const payload = await verifyToken(token, c.env.JWT_SECRET);
 
     if (!payload) {
+      console.log("[GetUser] Token verification failed");
       return c.json({ error: "Token inválido ou expirado" }, 401);
     }
+    
+    console.log("[GetUser] Token verified for user:", payload.userId, "type:", payload.userType);
 
     const db = createDb(c.env.DATABASE_URL);
 

@@ -36,15 +36,23 @@ app.use(
       // Allow specific Cloudflare Pages/Workers origins
       const allowedOrigins = [
         "https://frota-8j7.pages.dev",
+        "https://293beec1.frota-8j7.pages.dev",
         "https://frota.20230043.workers.dev",
       ];
+      
+      // Log origin for debugging
+      console.log("[CORS] Request origin:", origin);
+      
       if (origin && (allowedOrigins.includes(origin) || origin.endsWith(".pages.dev") || origin.endsWith(".workers.dev"))) {
+        console.log("[CORS] Origin allowed:", origin);
         return origin;
       }
       // For development
-      if (origin && (origin.includes("localhost") || origin.includes("127.0.0.1"))) {
+      if (origin && (origin.includes("localhost") || origin.includes("127.0.0.1") || origin.includes("replit"))) {
+        console.log("[CORS] Development origin allowed:", origin);
         return origin;
       }
+      console.log("[CORS] Fallback origin:", origin || "none");
       return origin || "";
     },
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],

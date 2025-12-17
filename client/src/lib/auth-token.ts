@@ -40,10 +40,16 @@ export function getApiUrl(): string {
     const hostname = window.location.hostname;
     console.log("[API URL Debug] Current hostname:", hostname);
     
-    // If already on the workers domain, use relative URLs
+    // If already on the workers domain, use relative URLs (API is on same domain)
     if (hostname === 'frota.20230043.workers.dev') {
       console.log("[API URL Debug] On workers domain, using relative URLs");
       return "";
+    }
+    
+    // If on the Cloudflare Pages domain, use absolute URL to Workers API
+    if (hostname.includes('frota-8j7.pages.dev') || hostname === '293beec1.frota-8j7.pages.dev') {
+      console.log("[API URL Debug] On Cloudflare Pages, using Workers API URL");
+      return CLOUDFLARE_API_URL;
     }
     
     if (hostname.includes('.pages.dev') || 
