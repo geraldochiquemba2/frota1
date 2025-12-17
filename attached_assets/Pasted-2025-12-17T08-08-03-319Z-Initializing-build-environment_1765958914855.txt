@@ -1,0 +1,84 @@
+2025-12-17T08:08:03.319Z	Initializing build environment...
+2025-12-17T08:08:03.319Z	Initializing build environment...
+2025-12-17T08:08:04.723Z	Success: Finished initializing build environment
+2025-12-17T08:08:05.124Z	Cloning repository...
+2025-12-17T08:08:05.874Z	Restoring from dependencies cache
+2025-12-17T08:08:05.876Z	Restoring from build output cache
+2025-12-17T08:08:05.879Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2025-12-17T08:08:06.551Z	Installing project dependencies: npm clean-install --progress=false
+2025-12-17T08:08:08.442Z	npm warn deprecated rollup-plugin-inject@3.0.2: This package has been deprecated and is no longer maintained. Please use @rollup/plugin-inject.
+2025-12-17T08:08:08.549Z	npm warn deprecated sourcemap-codec@1.4.8: Please use @jridgewell/sourcemap-codec instead
+2025-12-17T08:08:14.726Z	
+2025-12-17T08:08:14.726Z	added 80 packages, and audited 81 packages in 8s
+2025-12-17T08:08:14.726Z	
+2025-12-17T08:08:14.726Z	10 packages are looking for funding
+2025-12-17T08:08:14.727Z	  run `npm fund` for details
+2025-12-17T08:08:14.754Z	
+2025-12-17T08:08:14.754Z	2 moderate severity vulnerabilities
+2025-12-17T08:08:14.754Z	
+2025-12-17T08:08:14.754Z	To address all issues (including breaking changes), run:
+2025-12-17T08:08:14.754Z	  npm audit fix --force
+2025-12-17T08:08:14.754Z	
+2025-12-17T08:08:14.755Z	Run `npm audit` for details.
+2025-12-17T08:08:15.007Z	Executing user build command: npm install
+2025-12-17T08:08:15.903Z	
+2025-12-17T08:08:15.903Z	up to date, audited 81 packages in 699ms
+2025-12-17T08:08:15.903Z	
+2025-12-17T08:08:15.903Z	10 packages are looking for funding
+2025-12-17T08:08:15.904Z	  run `npm fund` for details
+2025-12-17T08:08:15.924Z	
+2025-12-17T08:08:15.924Z	2 moderate severity vulnerabilities
+2025-12-17T08:08:15.924Z	
+2025-12-17T08:08:15.925Z	To address all issues (including breaking changes), run:
+2025-12-17T08:08:15.925Z	  npm audit fix --force
+2025-12-17T08:08:15.925Z	
+2025-12-17T08:08:15.925Z	Run `npm audit` for details.
+2025-12-17T08:08:15.940Z	Success: Build command completed
+2025-12-17T08:08:16.119Z	Executing user deploy command: npx wrangler deploy
+2025-12-17T08:08:17.827Z	
+2025-12-17T08:08:17.829Z	 ⛅️ wrangler 3.114.15 (update available 4.55.0)
+2025-12-17T08:08:17.829Z	-----------------------------------------------
+2025-12-17T08:08:17.830Z	
+2025-12-17T08:08:17.924Z	▲ [WARNING] The version of Wrangler you are using is now out-of-date.
+2025-12-17T08:08:17.924Z	
+2025-12-17T08:08:17.924Z	  Please update to the latest version to prevent critical errors.
+2025-12-17T08:08:17.924Z	  Run `npm install --save-dev wrangler@4` to update to the latest version.
+2025-12-17T08:08:17.924Z	  After installation, run Wrangler with `npx wrangler`.
+2025-12-17T08:08:17.924Z	
+2025-12-17T08:08:17.924Z	
+2025-12-17T08:08:18.781Z	
+2025-12-17T08:08:18.783Z	✘ [ERROR] Build failed with 3 errors:
+2025-12-17T08:08:18.783Z	
+2025-12-17T08:08:18.783Z	  ✘ [ERROR] Could not resolve "drizzle-orm"
+2025-12-17T08:08:18.783Z	  
+2025-12-17T08:08:18.783Z	      ../shared/schema.ts:1:20:
+2025-12-17T08:08:18.784Z	        1 │ import { sql } from "drizzle-orm";
+2025-12-17T08:08:18.784Z	          ╵                     ~~~~~~~~~~~~~
+2025-12-17T08:08:18.784Z	  
+2025-12-17T08:08:18.784Z	    You can mark the path "drizzle-orm" as external to exclude it from the bundle, which will remove this error.
+2025-12-17T08:08:18.784Z	  
+2025-12-17T08:08:18.784Z	  
+2025-12-17T08:08:18.784Z	  ✘ [ERROR] Could not resolve "drizzle-orm/pg-core"
+2025-12-17T08:08:18.784Z	  
+2025-12-17T08:08:18.784Z	      ../shared/schema.ts:2:74:
+2025-12-17T08:08:18.784Z	        2 │ ...ar, integer, timestamp, real, boolean } from "drizzle-orm/pg-core";
+2025-12-17T08:08:18.784Z	          ╵                                                 ~~~~~~~~~~~~~~~~~~~~~
+2025-12-17T08:08:18.784Z	  
+2025-12-17T08:08:18.784Z	    You can mark the path "drizzle-orm/pg-core" as external to exclude it from the bundle, which will remove this error.
+2025-12-17T08:08:18.789Z	  
+2025-12-17T08:08:18.789Z	  
+2025-12-17T08:08:18.789Z	  ✘ [ERROR] Could not resolve "drizzle-zod"
+2025-12-17T08:08:18.789Z	  
+2025-12-17T08:08:18.789Z	      ../shared/schema.ts:3:35:
+2025-12-17T08:08:18.789Z	        3 │ import { createInsertSchema } from "drizzle-zod";
+2025-12-17T08:08:18.789Z	          ╵                                    ~~~~~~~~~~~~~
+2025-12-17T08:08:18.789Z	  
+2025-12-17T08:08:18.789Z	    You can mark the path "drizzle-zod" as external to exclude it from the bundle, which will remove this error.
+2025-12-17T08:08:18.789Z	  
+2025-12-17T08:08:18.790Z	  
+2025-12-17T08:08:18.790Z	
+2025-12-17T08:08:18.790Z	
+2025-12-17T08:08:18.790Z	
+2025-12-17T08:08:18.790Z	Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+2025-12-17T08:08:18.797Z	🪵  Logs were written to "/opt/buildhome/.config/.wrangler/logs/wrangler-2025-12-17_08-08-17_434.log"
+2025-12-17T08:08:18.839Z	Failed: error occurred while running deploy command

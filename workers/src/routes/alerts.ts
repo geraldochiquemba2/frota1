@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { createDb } from "../lib/db";
-import { alerts, insertAlertSchema } from "../../../shared/schema";
+import { alerts, insertAlertSchema } from "../schema";
 import { eq, desc } from "drizzle-orm";
 import { authMiddleware } from "../middleware/auth";
 import type { AppEnv } from "../index";

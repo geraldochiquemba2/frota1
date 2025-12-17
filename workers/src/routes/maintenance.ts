@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { createDb } from "../lib/db";
-import { maintenance, insertMaintenanceSchema } from "../../../shared/schema";
+import { maintenance, insertMaintenanceSchema } from "../schema";
 import { eq } from "drizzle-orm";
 import { authMiddleware } from "../middleware/auth";
 import type { AppEnv } from "../index";

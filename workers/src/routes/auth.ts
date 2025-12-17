@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { createDb } from "../lib/db";
 import { createToken, verifyToken } from "../lib/jwt";
 import { hashPassword, verifyPassword } from "../lib/password";
-import { adminUsers, drivers, insertDriverSchema } from "../../../shared/schema";
+import { adminUsers, drivers, insertDriverSchema } from "../schema";
 import { eq } from "drizzle-orm";
 import type { AppEnv } from "../index";
 

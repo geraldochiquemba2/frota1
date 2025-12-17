@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { createDb } from "../lib/db";
-import { drivers, trips, vehicles, alerts } from "../../../shared/schema";
+import { drivers, trips, vehicles, alerts } from "../schema";
 import { eq, desc, and } from "drizzle-orm";
 import { authMiddleware, driverMiddleware } from "../middleware/auth";
 import type { AppEnv } from "../index";
