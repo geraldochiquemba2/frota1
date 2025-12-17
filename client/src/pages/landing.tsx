@@ -7,7 +7,7 @@ import { ThemeToggle } from "@/components/fleet/ThemeToggle";
 import { Truck, MapPin, Bell, Wrench, Users, BarChart3, Phone, Lock, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { getApiUrl } from "@/lib/auth-token";
+import { getApiUrl, setToken } from "@/lib/auth-token";
 
 const features = [
   {
@@ -71,6 +71,13 @@ export default function Landing() {
         throw new Error(data.error || "Erro ao fazer login");
       }
 
+      const data = await response.json();
+      
+      // Store the JWT token
+      if (data.token) {
+        setToken(data.token);
+      }
+
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
       
@@ -109,6 +116,13 @@ export default function Landing() {
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Erro ao criar conta");
+      }
+
+      const data = await response.json();
+      
+      // Store the JWT token
+      if (data.token) {
+        setToken(data.token);
       }
 
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });

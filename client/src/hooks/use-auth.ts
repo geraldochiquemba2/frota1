@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { getApiUrl } from "@/lib/auth-token";
+import { getApiUrl, getToken, setToken, removeToken } from "@/lib/auth-token";
 
 interface AuthUser {
   id: string;
@@ -12,12 +12,26 @@ interface AuthUser {
 async function fetchUser(): Promise<AuthUser | null> {
   const apiUrl = getApiUrl();
   const url = apiUrl ? `${apiUrl}/api/auth/user` : "/api/auth/user";
+  const token = getToken();
+  
+  // If no token stored, user is not authenticated
+  if (!token && apiUrl) {
+    return null;
+  }
+  
+  const headers: HeadersInit = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
   
   const response = await fetch(url, {
     credentials: "include",
+    headers,
   });
 
   if (response.status === 401) {
+    // Token is invalid, remove it
+    removeToken();
     return null;
   }
 
@@ -56,6 +70,11 @@ export function useAuth() {
 
     const data = await response.json();
     
+    // Store the JWT token
+    if (data.token) {
+      setToken(data.token);
+    }
+    
     queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     
     return data;
@@ -81,6 +100,11 @@ export function useAuth() {
 
     const data = await response.json();
     
+    // Store the JWT token
+    if (data.token) {
+      setToken(data.token);
+    }
+    
     queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     
     return data;
@@ -94,6 +118,10 @@ export function useAuth() {
       method: "POST",
       credentials: "include",
     });
+    
+    // Remove the stored token
+    removeToken();
+    
     queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
   };
 
