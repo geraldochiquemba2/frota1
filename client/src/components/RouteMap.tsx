@@ -23,12 +23,7 @@ async function geocodeLocation(location: string): Promise<Coordinates | null> {
   try {
     const query = encodeURIComponent(`${location}, Angola`);
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`,
-      {
-        headers: {
-          "User-Agent": "FleetManagementApp/1.0"
-        }
-      }
+      `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`
     );
     
     if (!response.ok) return null;
@@ -195,10 +190,8 @@ export function RouteMap({ startLocation, destination, className = "" }: RouteMa
 
         setRouteInfo(route);
 
-        const bounds = L.latLngBounds([
-          [startCoords.lat, startCoords.lng],
-          [endCoords.lat, endCoords.lng]
-        ]);
+        // Use polyline bounds to ensure entire route is visible
+        const bounds = routeLayerRef.current.getBounds();
         leafletMapRef.current!.fitBounds(bounds, { padding: [50, 50] });
       } else {
         const straightLine = L.polyline([
@@ -224,10 +217,8 @@ export function RouteMap({ startLocation, destination, className = "" }: RouteMa
           geometry: [[startCoords.lat, startCoords.lng], [endCoords.lat, endCoords.lng]]
         });
 
-        const bounds = L.latLngBounds([
-          [startCoords.lat, startCoords.lng],
-          [endCoords.lat, endCoords.lng]
-        ]);
+        // Use polyline bounds for fallback straight line
+        const bounds = routeLayerRef.current.getBounds();
         leafletMapRef.current!.fitBounds(bounds, { padding: [50, 50] });
       }
 
