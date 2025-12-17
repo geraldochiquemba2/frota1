@@ -1,0 +1,189 @@
+Skip to content
+Cloudflare
+20230043@isptec.co.ao's Account
+
+Add
+
+Support
+
+Profile
+Account home
+
+Recents
+Workers & Pages
+Compute & AI
+
+frota1
+Workers
+
+frota
+Workers
+
+
+Analytics & logs
+Domains
+Build
+
+Compute & AI
+Workers & Pages
+Observability
+Workers for Platforms
+Containers
+Beta
+Durable Objects
+Queues
+Workflows
+Browser Rendering
+AI Search
+Beta
+Workers AI
+AI Gateway
+VPC
+Beta
+Workers plans
+
+Storage & databases
+
+Media
+Protect & Connect
+
+Application security
+Zero Trust
+
+Networking
+
+Delivery & performance
+
+Domain registration
+
+Manage account
+Workers & Pages
+frota1
+Overview
+Metrics
+Deployments
+Bindings
+Observability
+Settings
+frota1.staqw.workers.dev
+geraldochiquemba2/frota1
+by 20230043
+2 minutes ago
+Metrics
+Last 24 hours
+
+Requests
+195
+19500.00%
+
+Errors
+0
+
+CPU Time
+7.16
+ms
+716.13%
+Bindings
+frota1
+
+
+Binding
+
+Add binding
+
+Versions
+46fb17c0
+
+Manually deployed
+main
+by 20230043
+2m ago
+e681fa10
+
+
+Improve logout functionality to ensure token removal and cache clearing Update the logout function to remove the authentication token and clear the query cache before attempting to call the backend, ensuring a consistent user logout experience regardless of backend response. Replit-Commit-Author: Agent Replit-Commit-Session-Id: 437e6450-8735-4cda-8ae8-cf7201dfb8b1 Replit-Commit-C
+main
+by dsadsadsadsads5
+8m ago
+c4653f05
+
+
+Improve homepage responsiveness and button styling Add flex-wrap to header buttons and adjust button sizes for better mobile display. Replit-Commit-Author: Agent Replit-Commit-Session-Id: 3e5f60b2-2307-4fa8-beb1-4db63ecbdae9 Replit-Commit-Checkpoint-Type: full_checkpoint Replit-Commit-Event-Id: 88c69457-7855-44fc-aab0-a251ef13a91a Replit-Commit-Screenshot-Url: https://storage.goo
+main
+by sdfdsfdfdsfdfsf
+16m ago
+2f63b4c6
+
+Trigger rebuild
+main
+by geraldochiquemba2
+23m ago
+28c2a496
+
+Add secret: JWT_SECRET
+by 20230043
+25m ago
+bd534a36
+
+Add secret: DATABASE_URL
+by 20230043
+26m ago
+3d80208c
+
+Manually deployed
+main
+by 20230043
+27m ago
+4d3fe67f
+
+
+Update build command to copy frontend files correctly Correctly copies frontend build artifacts from `dist/public/` to `workers/public/` in the `deploy-cloudflare.sh` script. Replit-Commit-Author: Agent Replit-Commit-Session-Id: 3e5f60b2-2307-4fa8-beb1-4db63ecbdae9 Replit-Commit-Checkpoint-Type: full_checkpoint Replit-Commit-Event-Id: b50016ae-14cc-4d76-91a3-0c74b51744f7 Replit-C
+main
+by sdfdsfdfdsfdfsf
+29m ago
+da6fbec9
+
+Trigger rebuild
+main
+by geraldochiquemba2
+32m ago
+3be0704b
+
+Manually deployed
+main
+by 20230043
+34m ago
+Domains & Routes
+workers.dev
+frota1.staqw.workers.dev
+
+Preview URLs
+*-frota1.staqw.workers.dev
+
+Custom domains
+—
+
+Routes
+—
+
+Next steps
+Connect a custom domain
+
+Use your own domain to serve your worker for a professional appearance.
+
+Enable observability
+
+Monitor your worker's performance with logs and tracing.
+
+Store your data
+
+Connect KV, D1, or R2 storage to persist data across requests.
+
+Support
+System status
+Careers
+Terms of Use
+Report Security Issues
+Privacy Policy
+A blue and white pill with a checkmark and an x, representing privacy choicesCookie Preferences
+© 2025 Cloudflare, Inc.
