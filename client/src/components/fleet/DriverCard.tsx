@@ -6,19 +6,24 @@ import { Phone, Mail, FileText, Clock } from "lucide-react";
 interface DriverCardProps {
   id: string;
   name: string;
-  photo?: string;
+  photo?: string | null;
   phone: string;
   email: string;
   licenseExpiry: string;
-  status: "available" | "on-trip" | "off-duty";
+  status: string;
   assignedVehicle?: string;
   onClick?: () => void;
 }
 
-const statusLabels = {
+const statusLabels: Record<string, { label: string; className: string }> = {
   "available": { label: "Disponível", className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
   "on-trip": { label: "Em Viagem", className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  "on_trip": { label: "Em Viagem", className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
   "off-duty": { label: "Folga", className: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400" },
+};
+
+const getStatusInfo = (status: string) => {
+  return statusLabels[status] || { label: status || "Desconhecido", className: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400" };
 };
 
 export function DriverCard({
@@ -49,7 +54,7 @@ export function DriverCard({
     >
       <CardHeader className="flex flex-row items-center gap-4 pb-3">
         <Avatar className="h-12 w-12">
-          <AvatarImage src={photo} alt={name} />
+          <AvatarImage src={photo || undefined} alt={name} />
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
@@ -57,9 +62,9 @@ export function DriverCard({
             <h3 className="font-semibold truncate">{name}</h3>
             <Badge
               variant="outline"
-              className={`${statusLabels[status].className} no-default-hover-elevate no-default-active-elevate`}
+              className={`${getStatusInfo(status).className} no-default-hover-elevate no-default-active-elevate`}
             >
-              {statusLabels[status].label}
+              {getStatusInfo(status).label}
             </Badge>
           </div>
           {assignedVehicle && (

@@ -297,7 +297,7 @@ export class DatabaseStorage implements IStorage {
 
     return {
       totalVehicles: allVehicles.length,
-      activeDrivers: allDrivers.filter(d => d.status === "on-trip" || d.status === "available").length,
+      activeDrivers: allDrivers.filter(d => d.status === "on-trip" || d.status === "on_trip" || d.status === "available").length,
       activeAlerts: activeAlertsList.length,
       maintenanceDue: maintenanceList.length,
     };

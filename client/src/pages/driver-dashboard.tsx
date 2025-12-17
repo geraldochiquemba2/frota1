@@ -632,7 +632,7 @@ export default function DriverDashboard() {
           </div>
         </div>
         <Badge variant={profile?.status === "available" ? "default" : "secondary"} data-testid="badge-driver-status">
-          {profile?.status === "available" ? "Disponível" : profile?.status === "on_trip" ? "Em Viagem" : profile?.status}
+          {profile?.status === "available" ? "Disponível" : (profile?.status === "on_trip" || profile?.status === "on-trip") ? "Em Viagem" : profile?.status === "off-duty" ? "Folga" : profile?.status}
         </Badge>
       </div>
 

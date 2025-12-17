@@ -141,7 +141,7 @@ driverAppRoutes.post("/trips/start", async (c) => {
 
     await db
       .update(drivers)
-      .set({ status: "on_trip" })
+      .set({ status: "on-trip" })
       .where(eq(drivers.id, driver.id));
 
     if (vehicle && startLat && startLng) {

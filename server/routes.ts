@@ -489,7 +489,7 @@ export async function registerRoutes(
       });
 
       // Update driver status
-      await storage.updateDriver(driver.id, { status: "on_trip" });
+      await storage.updateDriver(driver.id, { status: "on-trip" });
 
       // Update vehicle location and status for real-time tracking
       if (vehicle && startLat && startLng) {

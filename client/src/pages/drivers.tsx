@@ -9,6 +9,9 @@ import type { Driver } from "@shared/schema";
 
 type DriverStatus = "available" | "on-trip" | "off-duty";
 
+// Helper function to check if driver is on trip (handles both "on-trip" and "on_trip")
+const isOnTrip = (status: string) => status === "on-trip" || status === "on_trip";
+
 export default function Drivers() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | DriverStatus>("all");
@@ -21,14 +24,15 @@ export default function Drivers() {
     const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase()) ||
       (d.email?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
       d.phone.includes(search);
-    const matchesStatus = statusFilter === "all" || d.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "on-trip" ? isOnTrip(d.status) : d.status === statusFilter);
     return matchesSearch && matchesStatus;
   });
 
   const statusCounts = {
     all: drivers.length,
     available: drivers.filter(d => d.status === "available").length,
-    "on-trip": drivers.filter(d => d.status === "on-trip").length,
+    "on-trip": drivers.filter(d => isOnTrip(d.status)).length,
     "off-duty": drivers.filter(d => d.status === "off-duty").length,
   };
 
@@ -79,10 +83,11 @@ export default function Drivers() {
               key={driver.id}
               id={driver.id}
               name={driver.name}
+              photo={driver.photo}
               phone={driver.phone}
               email={driver.email ?? ""}
               licenseExpiry={driver.licenseExpiry ?? ""}
-              status={driver.status as DriverStatus}
+              status={driver.status}
               assignedVehicle={driver.assignedVehicleId ?? undefined}
               onClick={() => {}}
             />
