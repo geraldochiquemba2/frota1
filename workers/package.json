@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "build": "wrangler deploy",
+    "build:frontend": "cd .. && npm run build && cp -r dist/* workers/public/",
+    "predeploy": "mkdir -p public && npm run build:frontend",
     "tail": "wrangler tail"
   },
   "dependencies": {

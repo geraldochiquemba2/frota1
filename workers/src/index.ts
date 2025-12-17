@@ -33,45 +33,37 @@ app.use(
   "*",
   cors({
     origin: (origin) => {
-      // Allow specific Cloudflare Pages/Workers origins
+      // When serving frontend from same domain, CORS is not needed
+      // But keep for development and any cross-origin requests
       const allowedOrigins = [
-        "https://frota-8j7.pages.dev",
-        "https://293beec1.frota-8j7.pages.dev",
         "https://frota.20230043.workers.dev",
       ];
       
-      // Log origin for debugging
-      console.log("[CORS] Request origin:", origin);
-      
-      if (origin && (allowedOrigins.includes(origin) || origin.endsWith(".pages.dev") || origin.endsWith(".workers.dev"))) {
-        console.log("[CORS] Origin allowed:", origin);
+      if (origin && (allowedOrigins.includes(origin) || origin.endsWith(".workers.dev"))) {
         return origin;
       }
       // For development
       if (origin && (origin.includes("localhost") || origin.includes("127.0.0.1") || origin.includes("replit"))) {
-        console.log("[CORS] Development origin allowed:", origin);
         return origin;
       }
-      console.log("[CORS] Fallback origin:", origin || "none");
       return origin || "";
     },
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "Cookie"],
-    exposeHeaders: ["Set-Cookie"],
+    allowHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
 
-app.get("/", (c) => {
+app.get("/health", (c) => {
+  return c.json({ status: "healthy" });
+});
+
+app.get("/api", (c) => {
   return c.json({ 
     message: "FleetTrack API - Cloudflare Workers",
     version: "1.0.0",
     status: "running"
   });
-});
-
-app.get("/health", (c) => {
-  return c.json({ status: "healthy" });
 });
 
 app.route("/api/auth", authRoutes);

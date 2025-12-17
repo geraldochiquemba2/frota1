@@ -14,31 +14,22 @@ async function fetchUser(): Promise<AuthUser | null> {
   const url = apiUrl ? `${apiUrl}/api/auth/user` : "/api/auth/user";
   const token = getToken();
   
-  console.log("[Auth Debug] fetchUser called:", { apiUrl, hasToken: !!token, url });
-  
-  // If no token stored and we're hitting external API, user is not authenticated
-  if (!token && apiUrl) {
-    console.log("[Auth Debug] No token and external API, returning null");
+  // If no token stored, user is not authenticated
+  if (!token) {
     return null;
   }
   
-  const headers: HeadersInit = {};
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  
-  console.log("[Auth Debug] Making request with headers:", Object.keys(headers));
+  const headers: HeadersInit = {
+    "Authorization": `Bearer ${token}`,
+  };
   
   const response = await fetch(url, {
     credentials: "include",
     headers,
   });
 
-  console.log("[Auth Debug] Response status:", response.status);
-
   if (response.status === 401) {
     // Token is invalid, remove it
-    console.log("[Auth Debug] 401 received, removing token");
     removeToken();
     return null;
   }
@@ -47,9 +38,7 @@ async function fetchUser(): Promise<AuthUser | null> {
     throw new Error(`${response.status}: ${response.statusText}`);
   }
 
-  const data = await response.json();
-  console.log("[Auth Debug] User data received:", { id: data.id, type: data.type });
-  return data;
+  return response.json();
 }
 
 export function useAuth() {
