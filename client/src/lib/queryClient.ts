@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { getToken, getApiUrl, removeToken } from "./auth-token";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -7,17 +8,44 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+function buildUrl(path: string): string {
+  const apiUrl = getApiUrl();
+  if (apiUrl) {
+    return `${apiUrl}${path}`;
+  }
+  return path;
+}
+
+function getHeaders(includeContentType: boolean = false): HeadersInit {
+  const token = getToken();
+  const headers: HeadersInit = {};
+  
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
+  if (includeContentType) {
+    headers["Content-Type"] = "application/json";
+  }
+  
+  return headers;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const fullUrl = buildUrl(url);
+  const res = await fetch(fullUrl, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: getHeaders(!!data),
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
   });
+
+  if (res.status === 401) {
+    removeToken();
+  }
 
   await throwIfResNotOk(res);
   return res;
@@ -29,12 +57,19 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
-      credentials: "include",
+    const pathParts = queryKey.filter((k): k is string => typeof k === "string");
+    const path = pathParts[0] || "";
+    const fullUrl = buildUrl(path);
+    
+    const res = await fetch(fullUrl, {
+      headers: getHeaders(),
     });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    if (res.status === 401) {
+      removeToken();
+      if (unauthorizedBehavior === "returnNull") {
+        return null;
+      }
     }
 
     await throwIfResNotOk(res);

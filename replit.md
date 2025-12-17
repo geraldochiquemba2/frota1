@@ -71,3 +71,34 @@ The application follows Material Design principles adapted for enterprise fleet 
 - **Vite**: Frontend build and development server
 - **esbuild**: Production server bundling
 - **drizzle-kit**: Database migrations and schema management
+
+## Cloudflare Workers Deployment (Alternative)
+
+The application has been prepared for deployment on Cloudflare Workers + Pages as an alternative to the Replit deployment. This provides:
+- HTTPS by default (required for GPS on mobile devices)
+- Edge computing for faster responses globally
+- Serverless architecture
+
+### Workers Backend (`/workers`)
+- **Framework**: Hono (Express-like framework for Workers)
+- **Authentication**: JWT-based (replaces session-based auth)
+- **Database**: Same Neon PostgreSQL using HTTP driver
+
+### Configuration Files
+- `workers/wrangler.toml`: Cloudflare Workers configuration
+- `workers/package.json`: Dependencies for Workers deployment
+- `cloudflare-pages.md`: Complete deployment guide
+
+### Environment Variables for Workers
+- `DATABASE_URL`: Neon PostgreSQL connection string (secret)
+- `JWT_SECRET`: Secret for signing JWT tokens (secret)
+- `VITE_API_URL`: Workers API URL (frontend build-time)
+
+### Deployment Commands
+```bash
+# Backend (Workers)
+cd workers && npm install && wrangler deploy
+
+# Frontend (Pages) 
+cd client && npm run build && wrangler pages deploy dist
+```
