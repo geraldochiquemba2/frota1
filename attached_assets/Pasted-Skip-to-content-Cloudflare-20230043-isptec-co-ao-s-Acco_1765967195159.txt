@@ -1,0 +1,198 @@
+Skip to content
+Cloudflare
+20230043@isptec.co.ao's Account
+
+Add
+
+Support
+
+Profile
+Account home
+
+Recents
+
+Workers & Pages
+Compute & AI
+
+
+frota
+Workers
+
+
+Analytics & logs
+Domains
+Build
+
+Compute & AI
+Workers & Pages
+Observability
+Workers for Platforms
+Containers
+Beta
+Durable Objects
+Queues
+Workflows
+Browser Rendering
+AI Search (AutoRAG)
+Beta
+Workers AI
+AI Gateway
+VPC
+Beta
+Workers plans
+
+Storage & databases
+
+Media
+Protect & Connect
+
+Application security
+Zero Trust
+
+Networking
+
+Delivery & performance
+
+Domain registration
+
+Manage account
+Workers & Pages
+frota
+Deployments
+Metrics
+Custom domains
+Settings
+Production
+Visit
+Automatic deployments enabled
+
+Domains:
+frota-8j7.pages.dev
+main
+1858405
+92c6544d.frota-8j7.pages.dev
+
+a few seconds ago
+View details
+All deployments
+Environment	Source	Deployment	Status		
+main
+1858405
+Add missing package lock file to ensure correct dependency installation The build process failed due to a missing package-lock.json file, preventing npm ci from installing project dependencies. Replit-Commit-Author: Agent Replit-Commit-Session-Id: 43c2b021-73eb-4daf-a167-33e418a0b298 Replit-Commit-Checkpoint-Type: full_checkpoint Replit-Commit-Event-Id: 151a0233-6dbc-419f-b377-37c7bd3e91ae Replit-Helium-Checkpoint-Created: true
+92c6544d.frota-8j7.pages.dev
+
+a few seconds ago
+View details
+
+main
+7534ab7
+Saved your changes before starting work Replit-Commit-Author: Agent Replit-Commit-Session-Id: 43c2b021-73eb-4daf-a167-33e418a0b298 Replit-Commit-Checkpoint-Type: full_checkpoint Replit-Commit-Event-Id: 7cb67b41-9c83-49d9-8f39-192ca18d2b92
+59dccaf5.frota-8j7.pages.dev
+
+3 minutes ago
+View details
+
+main
+7b6dfae
+Update database driver and connection method for Neon compatibility Update @neondatabase/serverless to ^0.10.0 and adjust drizzle initialization in db.ts to use { client: sql } for compatibility with the new Neon API. Replit-Commit-Author: Agent Replit-Commit-Session-Id: e93ab978-dbb2-4c43-80c8-e482d7dd04ff Replit-Commit-Checkpoint-Type: full_checkpoint Replit-Commit-Event-Id: 05cb811b-b5be-4942-b25c-33ca1298b4cb Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/6f74e1fe-7922-430b-9f1c-87397de90452/e93ab978-dbb2-4c43-80c8-e482d7dd04ff/2j5Vmnu Replit-Helium-Checkpoint-Created: true
+e864dc49.frota-8j7.pages.dev
+
+9 minutes ago
+View details
+
+main
+3d7fd4d
+Update database library to fix login errors Pin `@neondatabase/serverless` to version `0.9.5` to resolve template literal API errors in database queries. Replit-Commit-Author: Agent Replit-Commit-Session-Id: e93ab978-dbb2-4c43-80c8-e482d7dd04ff Replit-Commit-Checkpoint-Type: full_checkpoint Replit-Commit-Event-Id: 17c8ebe9-a37c-4d68-9bd7-d53c4b8366de Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/6f74e1fe-7922-430b-9f1c-87397de90452/e93ab978-dbb2-4c43-80c8-e482d7dd04ff/2j5Vmnu Replit-Helium-Checkpoint-Created: true
+79b9d716.frota-8j7.pages.dev
+
+10 minutes ago
+View details
+
+main
+08e77bc
+Improve error reporting for login failures Add more detailed error logging to the login route to capture and return specific error messages in case of a 500 Internal Server Error. Replit-Commit-Author: Agent Replit-Commit-Session-Id: e93ab978-dbb2-4c43-80c8-e482d7dd04ff Replit-Commit-Checkpoint-Type: full_checkpoint Replit-Commit-Event-Id: 2cecb142-6d41-4b8e-8a8e-ffad1208008e Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/6f74e1fe-7922-430b-9f1c-87397de90452/e93ab978-dbb2-4c43-80c8-e482d7dd04ff/pTPmOIR Replit-Helium-Checkpoint-Created: true
+44b5d64f.frota-8j7.pages.dev
+
+10 minutes ago
+View details
+
+main
+ede455e
+Add checks for missing server configuration variables Adds console error logging for missing DATABASE_URL and JWT_SECRET in the login route to aid in debugging. Replit-Commit-Author: Agent Replit-Commit-Session-Id: e93ab978-dbb2-4c43-80c8-e482d7dd04ff Replit-Commit-Checkpoint-Type: full_checkpoint Replit-Commit-Event-Id: d4c57a08-22a4-407b-a5f8-2bcfaef1c334 Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/6f74e1fe-7922-430b-9f1c-87397de90452/e93ab978-dbb2-4c43-80c8-e482d7dd04ff/pTPmOIR Replit-Helium-Checkpoint-Created: true
+2af63e48.frota-8j7.pages.dev
+
+21 minutes ago
+View details
+
+main
+717712f
+Force deploy
+35d4176f.frota-8j7.pages.dev
+
+24 minutes ago
+View details
+
+main
+e6b4569
+Update deployment
+4f5ee1c7.frota-8j7.pages.dev
+
+29 minutes ago
+View details
+
+main
+e91da5c
+Fix CORS configuration
+d649564d.frota-8j7.pages.dev
+
+36 minutes ago
+View details
+
+main
+2761078
+Fix cross-origin requests for user login and session handling Update CORS configuration in Cloudflare Workers to allow specific origins, enable credentials, and expose Set-Cookie header. Replit-Commit-Author: Agent Replit-Commit-Session-Id: e93ab978-dbb2-4c43-80c8-e482d7dd04ff Replit-Commit-Checkpoint-Type: full_checkpoint Replit-Commit-Event-Id: c96272d5-8a28-4397-8de4-bd8e3cbd7361 Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/6f74e1fe-7922-430b-9f1c-87397de90452/e93ab978-dbb2-4c43-80c8-e482d7dd04ff/pTPmOIR Replit-Helium-Checkpoint-Created: true
+293beec1.frota-8j7.pages.dev
+
+43 minutes ago
+View details
+
+main
+45b1030
+Adapt application to work with Cloudflare Workers and Pages deployments Update API endpoint URLs to dynamically resolve based on environment for Cloudflare Workers and Pages integration. Configure session cookies for cross-origin compatibility, enabling `sameSite: "none"` and `secure: true` in production. Add Cloudflare-specific origins to CORS configuration and set `trust proxy` for Cloudflare's proxy. Replit-Commit-Author: Agent Replit-Commit-Session-Id: b726fee3-bf8d-4667-ad26-2cec6d165c9e Replit-Commit-Checkpoint-Type: full_checkpoint Replit-Commit-Event-Id: 6d29dfae-941b-4e6c-ba6a-f06fc0e81066 Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/a2611549-5e81-4f0b-8c9e-a49518655dcf/b726fee3-bf8d-4667-ad26-2cec6d165c9e/i6qwf9q Replit-Helium-Checkpoint-Created: true
+5b427698.frota-8j7.pages.dev
+
+an hour ago
+View details
+
+main
+8d76db1
+Update API URL handling for consistent deployment across environments Modify client-side logic to correctly resolve the API URL, prioritizing environment variables and ensuring proper functionality in Cloudflare Pages deployments by using a new local storage key and updating the domain detection. Replit-Commit-Author: Agent Replit-Commit-Session-Id: 46ac1908-603d-4371-aa5c-a28461980cb5 Replit-Commit-Checkpoint-Type: full_checkpoint Replit-Commit-Event-Id: 7506ade1-7858-43d0-8e64-ccf959588c28 Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/d3806433-46c7-4ca4-b4c9-d263753f6838/46ac1908-603d-4371-aa5c-a28461980cb5/naIio5r Replit-Helium-Checkpoint-Created: true
+6b7d4806.frota-8j7.pages.dev
+
+2 hours ago
+View details
+
+main
+bdadf17
+Add specific API URL for Cloudflare Pages deployments Update `getApiUrl` function in `auth-token.ts` to include a hardcoded fallback for Cloudflare Pages environments, as Vite's build-time environment variable injection does not directly apply to runtime. Replit-Commit-Author: Agent Replit-Commit-Session-Id: 46ac1908-603d-4371-aa5c-a28461980cb5 Replit-Commit-Checkpoint-Type: full_checkpoint Replit-Commit-Event-Id: 602eb660-427c-45bf-be73-a56de679313b Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/d3806433-46c7-4ca4-b4c9-d263753f6838/46ac1908-603d-4371-aa5c-a28461980cb5/naIio5r Replit-Helium-Checkpoint-Created: true
+77ac47f3.frota-8j7.pages.dev
+
+2 hours ago
+View details
+
+main
+a7e0252
+Update fleet management platform to use local schema for worker deployment Adjust import paths in worker routes to reference a local schema file (`./schema.ts`) instead of the shared schema (`../../../shared/schema.ts`) to resolve deployment issues on Cloudflare. Replit-Commit-Author: Agent Replit-Commit-Session-Id: 46ac1908-603d-4371-aa5c-a28461980cb5 Replit-Commit-Checkpoint-Type: full_checkpoint Replit-Commit-Event-Id: 4b9de9f0-499f-408b-a5c1-735e0c412b45 Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/d3806433-46c7-4ca4-b4c9-d263753f6838/46ac1908-603d-4371-aa5c-a28461980cb5/naIio5r Replit-Helium-Checkpoint-Created: true
+ac3c680c.frota-8j7.pages.dev
+
+2 hours ago
+View details
+
+Support
+System status
+Careers
+Terms of Use
+Report Security Issues
+Privacy Policy
+A blue and white pill with a checkmark and an x, representing privacy choicesCookie Preferences
+© 2025 Cloudflare, Inc.

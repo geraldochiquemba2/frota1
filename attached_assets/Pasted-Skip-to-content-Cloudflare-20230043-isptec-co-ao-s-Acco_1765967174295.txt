@@ -1,0 +1,169 @@
+Skip to content
+Cloudflare
+20230043@isptec.co.ao's Account
+
+Add
+
+Support
+
+Profile
+Account home
+
+Recents
+
+Workers & Pages
+Compute & AI
+
+
+frota
+Workers
+
+
+Analytics & logs
+Domains
+Build
+
+Compute & AI
+Workers & Pages
+Observability
+Workers for Platforms
+Containers
+Beta
+Durable Objects
+Queues
+Workflows
+Browser Rendering
+AI Search (AutoRAG)
+Beta
+Workers AI
+AI Gateway
+VPC
+Beta
+Workers plans
+
+Storage & databases
+
+Media
+Protect & Connect
+
+Application security
+Zero Trust
+
+Networking
+
+Delivery & performance
+
+Domain registration
+
+Manage account
+Workers & Pages
+frota
+Overview
+Metrics
+Deployments
+Bindings
+Observability
+Settings
+Latest build failed
+Domains & Routes
+Define the domains, subdomains and routes where your Worker is accessible
+
+Type
+Value
+workers.dev
+frota.20230043.workers.dev
+Preview URLs
+*-frota.20230043.workers.dev
+Variables and Secrets
+Define the environment variables and secrets for your Worker used at runtime
+
+Type
+Name
+Value
+Secret
+DATABASE_URL
+Value encrypted
+
+
+Plaintext
+ENVIRONMENT
+production
+
+
+Secret
+JWT_SECRET
+Value encrypted
+
+
+Trigger Events
+Define the events that invoke your Worker
+
+Configure ways to invoke your Worker through scheduled cron jobs and messaging events
+Observability
+Workers Logs
+Disabled
+Workers Traces
+disabled
+Logpush
+Tail Worker
+No Tail Workers connected
+Runtime
+Placement
+Default
+Compatibility date
+Jan 1, 2024
+Compatibility flags
+nodejs_compat
+Build
+Connect your Worker to a Git repository for automatic builds and deployments
+
+Your last build failed.
+View build
+
+Git repository
+geraldochiquemba2/Frota
+Build configuration
+Build command:npm install
+Deploy command:npx wrangler deploy
+Version command:npx wrangler versions upload
+Root directory:/workers
+Branch control
+Production branch:main
+Builds for non-production branches:Enabled
+Build watch paths
+Include paths:
+*
+API token
+Name:frota build token
+Variables and secrets
+Type
+Name
+Value
+Variable
+DATABASE_URL
+postgresql://neondb_owner:npg_iPIUJNs82khr@ep-divine-lake-ahnzrbg4-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+Variable
+JWT_SECRET
+minha-chave-super-secreta-123
+Build cache
+Enabled (Clear Cache)
+General
+Name
+frota
+Permanently delete all files, configurations, versions and deployments associated with this Worker.
+Domains & Routes
+Variables and Secrets
+Trigger Events
+Observability
+Runtime
+Build
+General
+Workers configuration
+Support
+System status
+Careers
+Terms of Use
+Report Security Issues
+Privacy Policy
+A blue and white pill with a checkmark and an x, representing privacy choicesCookie Preferences
+© 2025 Cloudflare, Inc.
