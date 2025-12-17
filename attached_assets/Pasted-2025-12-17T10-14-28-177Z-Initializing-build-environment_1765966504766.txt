@@ -1,0 +1,74 @@
+2025-12-17T10:14:28.177Z	Initializing build environment...
+2025-12-17T10:14:29.875Z	Success: Finished initializing build environment
+2025-12-17T10:14:30.240Z	Cloning repository...
+2025-12-17T10:14:31.872Z	Restoring from dependencies cache
+2025-12-17T10:14:31.874Z	Restoring from build output cache
+2025-12-17T10:14:31.878Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2025-12-17T10:14:32.897Z	Success: Dependencies restored from build cache.
+2025-12-17T10:14:33.025Z	Installing project dependencies: npm clean-install --progress=false
+2025-12-17T10:14:28.177Z	Initializing build environment...
+2025-12-17T10:14:29.875Z	Success: Finished initializing build environment
+2025-12-17T10:14:30.240Z	Cloning repository...
+2025-12-17T10:14:31.872Z	Restoring from dependencies cache
+2025-12-17T10:14:31.874Z	Restoring from build output cache
+2025-12-17T10:14:31.878Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2025-12-17T10:14:32.897Z	Success: Dependencies restored from build cache.
+2025-12-17T10:14:33.025Z	Installing project dependencies: npm clean-install --progress=false
+2025-12-17T10:14:34.577Z	npm warn ERESOLVE overriding peer dependency
+2025-12-17T10:14:34.578Z	npm warn While resolving: fleettrack-workers@1.0.0
+2025-12-17T10:14:34.578Z	npm warn Found: @neondatabase/serverless@1.0.2
+2025-12-17T10:14:34.578Z	npm warn node_modules/@neondatabase/serverless
+2025-12-17T10:14:34.578Z	npm warn   @neondatabase/serverless@"0.9.5" from the root project
+2025-12-17T10:14:34.578Z	npm warn   1 more (drizzle-orm)
+2025-12-17T10:14:34.578Z	npm warn
+2025-12-17T10:14:34.578Z	npm warn Could not resolve dependency:
+2025-12-17T10:14:34.578Z	npm warn peerOptional @neondatabase/serverless@">=0.10.0" from drizzle-orm@0.36.4
+2025-12-17T10:14:34.578Z	npm warn node_modules/drizzle-orm
+2025-12-17T10:14:34.578Z	npm warn   drizzle-orm@"^0.36.0" from the root project
+2025-12-17T10:14:34.578Z	npm warn   1 more (drizzle-zod)
+2025-12-17T10:14:34.578Z	npm warn ERESOLVE overriding peer dependency
+2025-12-17T10:14:34.578Z	npm warn While resolving: fleettrack-workers@1.0.0
+2025-12-17T10:14:34.578Z	npm warn Found: @neondatabase/serverless@1.0.2
+2025-12-17T10:14:34.578Z	npm warn node_modules/@neondatabase/serverless
+2025-12-17T10:14:34.578Z	npm warn   @neondatabase/serverless@"0.9.5" from the root project
+2025-12-17T10:14:34.578Z	npm warn   1 more (drizzle-orm)
+2025-12-17T10:14:34.578Z	npm warn
+2025-12-17T10:14:34.578Z	npm warn Could not resolve dependency:
+2025-12-17T10:14:34.578Z	npm warn peerOptional @neondatabase/serverless@">=0.10.0" from drizzle-orm@0.36.4
+2025-12-17T10:14:34.578Z	npm warn node_modules/drizzle-orm
+2025-12-17T10:14:34.579Z	npm warn   drizzle-orm@"^0.36.0" from the root project
+2025-12-17T10:14:34.579Z	npm warn   1 more (drizzle-zod)
+2025-12-17T10:14:35.030Z	npm error code EUSAGE
+2025-12-17T10:14:35.030Z	npm error
+2025-12-17T10:14:35.030Z	npm error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.
+2025-12-17T10:14:35.030Z	npm error
+2025-12-17T10:14:35.030Z	npm error Invalid: lock file's @neondatabase/serverless@1.0.2 does not satisfy @neondatabase/serverless@0.9.5
+2025-12-17T10:14:35.030Z	npm error Missing: @types/pg@8.11.6 from lock file
+2025-12-17T10:14:35.030Z	npm error Missing: pg-types@4.1.0 from lock file
+2025-12-17T10:14:35.030Z	npm error Missing: pg-numeric@1.0.2 from lock file
+2025-12-17T10:14:35.030Z	npm error Missing: postgres-array@3.0.4 from lock file
+2025-12-17T10:14:35.030Z	npm error Missing: postgres-bytea@3.0.0 from lock file
+2025-12-17T10:14:35.030Z	npm error Missing: postgres-date@2.1.0 from lock file
+2025-12-17T10:14:35.031Z	npm error Missing: postgres-interval@3.0.0 from lock file
+2025-12-17T10:14:35.031Z	npm error Missing: postgres-range@1.1.4 from lock file
+2025-12-17T10:14:35.031Z	npm error Missing: obuf@1.1.2 from lock file
+2025-12-17T10:14:35.031Z	npm error
+2025-12-17T10:14:35.031Z	npm error Clean install a project
+2025-12-17T10:14:35.031Z	npm error
+2025-12-17T10:14:35.031Z	npm error Usage:
+2025-12-17T10:14:35.031Z	npm error npm ci
+2025-12-17T10:14:35.031Z	npm error
+2025-12-17T10:14:35.031Z	npm error Options:
+2025-12-17T10:14:35.031Z	npm error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]
+2025-12-17T10:14:35.031Z	npm error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]
+2025-12-17T10:14:35.031Z	npm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]
+2025-12-17T10:14:35.031Z	npm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]
+2025-12-17T10:14:35.031Z	npm error [--no-bin-links] [--no-fund] [--dry-run]
+2025-12-17T10:14:35.031Z	npm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]
+2025-12-17T10:14:35.031Z	npm error [-ws|--workspaces] [--include-workspace-root] [--install-links]
+2025-12-17T10:14:35.031Z	npm error
+2025-12-17T10:14:35.031Z	npm error aliases: clean-install, ic, install-clean, isntall-clean
+2025-12-17T10:14:35.031Z	npm error
+2025-12-17T10:14:35.031Z	npm error Run "npm help ci" for more info
+2025-12-17T10:14:35.031Z	npm error A complete log of this run can be found in: /opt/buildhome/.npm/_logs/2025-12-17T10_14_33_423Z-debug-0.log
+2025-12-17T10:14:35.085Z	Failed: error occurred while installing tools or dependencies
