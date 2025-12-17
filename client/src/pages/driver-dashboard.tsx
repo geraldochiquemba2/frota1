@@ -225,11 +225,14 @@ export default function DriverDashboard() {
       return;
     }
 
-    // All methods failed
+    // All methods failed - use default location based on profile
+    // Use homeBase from profile, or set a default
+    const defaultLocation = profile?.homeBase || "Luanda, Angola";
+    setStartLocation(defaultLocation);
+    
     toast({
-      title: "Não foi possível obter localização",
-      description: "Digite o local de partida manualmente.",
-      variant: "destructive",
+      title: "Localização automática",
+      description: `Usámos "${defaultLocation}" como ponto de partida. Pode editar acima se necessário.`,
     });
     setGettingLocation(false);
   };
