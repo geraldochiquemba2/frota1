@@ -339,19 +339,19 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
+        <div className="container mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <Truck className="h-6 w-6" />
             </div>
             <h1 className="font-semibold text-lg">FleetTrack</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-center">
             <ThemeToggle />
-            <Button variant="outline" onClick={() => setShowRegister(true)} data-testid="button-header-register">
+            <Button variant="outline" size="sm" onClick={() => setShowRegister(true)} data-testid="button-header-register">
               Cadastrar
             </Button>
-            <Button onClick={() => setShowLogin(true)} data-testid="button-header-login">
+            <Button size="sm" onClick={() => setShowLogin(true)} data-testid="button-header-login">
               Entrar
             </Button>
           </div>
