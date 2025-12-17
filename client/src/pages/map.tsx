@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, X, List } from "lucide-react";
 import type { VehicleStatus } from "@/components/fleet/StatusBadge";
-import type { Vehicle, Driver } from "@shared/schema";
+import type { Vehicle, Driver, Trip } from "@shared/schema";
 
 export default function LiveMap() {
   const [selectedVehicle, setSelectedVehicle] = useState<string | undefined>();
@@ -24,7 +24,26 @@ export default function LiveMap() {
     queryKey: ["/api/drivers"],
   });
 
+  const { data: trips = [] } = useQuery<Trip[]>({
+    queryKey: ["/api/trips"],
+    refetchInterval: 10000,
+  });
+
   const [showSidebar, setShowSidebar] = useState(true);
+
+  // Build active routes from trips that have coordinates
+  const activeRoutes = trips
+    .filter(t => t.status === "active" && t.startLat && t.startLng && t.currentLat && t.currentLng)
+    .map(t => ({
+      vehicleId: t.vehicleId,
+      startLat: t.startLat!,
+      startLng: t.startLng!,
+      currentLat: t.currentLat!,
+      currentLng: t.currentLng!,
+      destLat: t.destLat ?? undefined,
+      destLng: t.destLng ?? undefined,
+      destination: t.destination ?? undefined,
+    }));
 
   const getDriverName = (driverId: string | null) => {
     if (!driverId) return undefined;
@@ -147,6 +166,7 @@ export default function LiveMap() {
             status: v.status as VehicleStatus,
             driver: getDriverName(v.driverId),
           }))}
+          activeRoutes={activeRoutes}
           selectedVehicleId={selectedVehicle}
           onVehicleClick={setSelectedVehicle}
         />
