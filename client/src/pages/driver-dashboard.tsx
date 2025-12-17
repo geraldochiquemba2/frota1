@@ -39,25 +39,130 @@ export default function DriverDashboard() {
   const [endLocation, setEndLocation] = useState("");
   const [endOdometer, setEndOdometer] = useState("");
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [gpsStatus, setGpsStatus] = useState<"idle" | "requesting" | "active" | "error">("idle");
+  const [gpsStatus, setGpsStatus] = useState<"needs_permission" | "requesting" | "active" | "error">("needs_permission");
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [trackingActive, setTrackingActive] = useState(false);
+  const [permissionState, setPermissionState] = useState<"prompt" | "granted" | "denied" | "unknown">("unknown");
   const photoInputRef = useRef<HTMLInputElement>(null);
   const watchIdRef = useRef<number | null>(null);
-  const hasRequestedGps = useRef(false);
+  const startLocationRef = useRef(startLocation);
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    startLocationRef.current = startLocation;
+  }, [startLocation]);
 
-  // Start GPS tracking immediately when component mounts
-  const startGpsTracking = () => {
+  // Check permission state on mount
+  useEffect(() => {
+    const checkPermission = async () => {
+      if (!("geolocation" in navigator)) {
+        setGpsStatus("error");
+        setGpsError("Este navegador não suporta GPS");
+        return;
+      }
+      
+      try {
+        if ("permissions" in navigator) {
+          const result = await navigator.permissions.query({ name: "geolocation" });
+          setPermissionState(result.state as "prompt" | "granted" | "denied");
+          
+          if (result.state === "granted") {
+            // Already have permission, start tracking
+            startGpsTracking();
+          } else if (result.state === "denied") {
+            setGpsStatus("error");
+            setGpsError("GPS bloqueado. Vá às Configurações do navegador e permita a localização para este site.");
+          }
+          
+          // Listen for permission changes
+          result.addEventListener("change", () => {
+            setPermissionState(result.state as "prompt" | "granted" | "denied");
+            if (result.state === "granted") {
+              startGpsTracking();
+            }
+          });
+        }
+      } catch {
+        // Permissions API not supported, will need user click
+        setPermissionState("prompt");
+      }
+    };
+    
+    checkPermission();
+  }, []);
+
+  // Request GPS permission - MUST be triggered by user click (like Google Maps)
+  const requestGpsPermission = () => {
     if (!("geolocation" in navigator)) {
       setGpsStatus("error");
-      setGpsError("GPS não suportado neste navegador");
+      setGpsError("GPS não suportado neste navegador. Use Chrome ou Safari.");
+      toast({
+        title: "GPS não suportado",
+        description: "Este navegador não suporta GPS. Use Chrome ou Safari.",
+        variant: "destructive",
+      });
       return;
     }
 
     setGpsStatus("requesting");
     setGpsError(null);
 
-    // Use watchPosition for continuous updates - more reliable than getCurrentPosition on mobile
+    // First, use getCurrentPosition to trigger the permission popup (requires user gesture)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        // Permission granted! Now start continuous tracking
+        const { latitude, longitude } = position.coords;
+        setGpsCoords({ lat: latitude, lng: longitude });
+        setGpsStatus("active");
+        setPermissionState("granted");
+        
+        toast({
+          title: "GPS ativo",
+          description: "A localização está a ser rastreada em tempo real.",
+        });
+        
+        // Start continuous tracking
+        startGpsTracking();
+      },
+      (error) => {
+        console.error("GPS permission error:", error.code, error.message);
+        setGpsStatus("error");
+        
+        switch (error.code) {
+          case 1: // PERMISSION_DENIED
+            setPermissionState("denied");
+            setGpsError("Permissão negada. Vá às Configurações do navegador/telemóvel, procure este site e permita a localização.");
+            toast({
+              title: "GPS bloqueado",
+              description: "Permita o GPS nas Configurações do navegador e recarregue a página.",
+              variant: "destructive",
+            });
+            break;
+          case 2: // POSITION_UNAVAILABLE
+            setGpsError("GPS indisponível. Verifique se o GPS do telemóvel está ligado nas Configurações do sistema.");
+            toast({
+              title: "GPS indisponível",
+              description: "Ligue o GPS nas Configurações do telemóvel.",
+              variant: "destructive",
+            });
+            break;
+          case 3: // TIMEOUT
+            setGpsError("GPS demorou muito. Tente ao ar livre ou perto de uma janela.");
+            break;
+          default:
+            setGpsError(error.message || "Erro de GPS desconhecido");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 30000,
+        maximumAge: 0 // Force fresh position for permission request
+      }
+    );
+  };
+
+  // Start continuous GPS tracking (called after permission is granted)
+  const startGpsTracking = () => {
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current);
     }
@@ -70,13 +175,13 @@ export default function DriverDashboard() {
         setGpsError(null);
         
         // Set start location if not set yet
-        if (!startLocation) {
-          setStartLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+        if (!startLocationRef.current) {
+          setStartLocation(`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
           // Try to get address name in background
           fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
             .then(res => res.json())
             .then(data => {
-              if (data.display_name) {
+              if (data.display_name && !startLocationRef.current.includes(",")) {
                 setStartLocation(data.display_name.split(",").slice(0, 3).join(", "));
               }
             })
@@ -84,47 +189,20 @@ export default function DriverDashboard() {
         }
       },
       (error) => {
-        console.error("GPS error:", error.code, error.message);
-        setGpsStatus("error");
-        
-        switch (error.code) {
-          case 1: // PERMISSION_DENIED
-            setGpsError("GPS bloqueado. Permita o acesso à localização nas configurações do navegador.");
-            toast({
-              title: "GPS bloqueado",
-              description: "Permita o acesso à localização nas configurações do seu navegador/telemóvel.",
-              variant: "destructive",
-            });
-            break;
-          case 2: // POSITION_UNAVAILABLE
-            setGpsError("Não foi possível obter a posição. Verifique se o GPS está ligado.");
-            break;
-          case 3: // TIMEOUT
-            setGpsError("GPS demorou muito. Tente ao ar livre.");
-            break;
-          default:
-            setGpsError(error.message || "Erro de GPS desconhecido");
+        console.error("GPS tracking error:", error.code, error.message);
+        // Don't change status to error if we already have coords - just log
+        if (!gpsCoords) {
+          setGpsStatus("error");
+          setGpsError("Erro no rastreamento GPS. Tente novamente.");
         }
       },
       {
         enableHighAccuracy: true,
-        timeout: 30000,
-        maximumAge: 10000 // Accept positions up to 10 seconds old
+        timeout: 60000,
+        maximumAge: 5000 // Accept positions up to 5 seconds old for smoother tracking
       }
     );
   };
-
-  // Auto-start GPS on component mount
-  useEffect(() => {
-    if (!hasRequestedGps.current) {
-      hasRequestedGps.current = true;
-      // Small delay to ensure component is fully mounted
-      const timer = setTimeout(() => {
-        startGpsTracking();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, []);
 
   // Cleanup GPS watch on unmount
   useEffect(() => {
@@ -511,42 +589,94 @@ export default function DriverDashboard() {
                     A obter GPS...
                   </Badge>
                 )}
-                {gpsStatus === "error" && (
-                  <Badge variant="destructive" className="cursor-pointer" onClick={startGpsTracking}>
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    GPS Erro - Clicar para tentar
-                  </Badge>
-                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {gpsError && (
-                <div className="mb-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              {/* GPS Permission Request - Like Google Maps */}
+              {(gpsStatus === "needs_permission" || (gpsStatus === "error" && permissionState !== "denied")) && !gpsCoords && (
+                <div className="mb-6 p-4 rounded-md bg-blue-500/10 border border-blue-500/30">
+                  <div className="text-center space-y-3">
+                    <div className="mx-auto w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <Navigation className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
                     <div>
-                      <p className="font-medium">Problema com GPS:</p>
-                      <p>{gpsError}</p>
+                      <p className="font-semibold text-blue-700 dark:text-blue-300">Ativar Localização GPS</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Clique no botão abaixo para permitir o rastreamento da sua localização em tempo real.
+                      </p>
+                    </div>
+                    <Button 
+                      type="button"
+                      size="lg"
+                      className="w-full"
+                      onClick={requestGpsPermission}
+                      data-testid="button-enable-gps"
+                    >
+                      <Navigation className="h-5 w-5 mr-2" />
+                      Ativar GPS Agora
+                    </Button>
+                    {gpsError && (
+                      <p className="text-sm text-destructive mt-2">{gpsError}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* GPS Requesting State */}
+              {gpsStatus === "requesting" && !gpsCoords && (
+                <div className="mb-6 p-4 rounded-md bg-blue-500/10 border border-blue-500/30">
+                  <div className="text-center space-y-3">
+                    <div className="mx-auto w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <Loader2 className="h-6 w-6 text-blue-600 dark:text-blue-400 animate-spin" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-blue-700 dark:text-blue-300">A obter localização...</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Por favor aceite a permissão de localização quando o navegador perguntar.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* GPS Denied Error */}
+              {permissionState === "denied" && (
+                <div className="mb-6 p-4 rounded-md bg-destructive/10 border border-destructive/30">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-destructive">GPS Bloqueado</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        O GPS foi bloqueado. Para ativar:
+                      </p>
+                      <ol className="text-sm text-muted-foreground mt-2 list-decimal list-inside space-y-1">
+                        <li>Abra as Configurações do navegador</li>
+                        <li>Procure por "Permissões do site" ou "Localização"</li>
+                        <li>Permita este site aceder à localização</li>
+                        <li>Recarregue a página</li>
+                      </ol>
                       <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
-                        className="mt-2"
-                        onClick={startGpsTracking}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-3"
+                        onClick={() => window.location.reload()}
                       >
-                        <Navigation className="h-3 w-3 mr-1" />
-                        Tentar novamente
+                        Recarregar Página
                       </Button>
                     </div>
                   </div>
                 </div>
               )}
               
+              {/* GPS Active Success */}
               {gpsCoords && (
-                <div className="mb-4 p-3 rounded-md bg-green-500/10 text-green-700 dark:text-green-400 text-sm">
+                <div className="mb-4 p-3 rounded-md bg-green-500/10 border border-green-500/30 text-green-700 dark:text-green-400 text-sm">
                   <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
                     <Navigation className="h-4 w-4" />
-                    <span>GPS detectou: {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}</span>
+                    <span className="font-medium">GPS Ativo:</span>
+                    <span>{gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}</span>
                   </div>
                 </div>
               )}
@@ -566,10 +696,10 @@ export default function DriverDashboard() {
                       type="button"
                       size="icon"
                       variant={gpsStatus === "active" ? "default" : "outline"}
-                      onClick={startGpsTracking}
+                      onClick={requestGpsPermission}
                       disabled={gpsStatus === "requesting"}
                       data-testid="button-get-location"
-                      title="Tentar GPS novamente"
+                      title="Ativar/Atualizar GPS"
                     >
                       {gpsStatus === "requesting" ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
