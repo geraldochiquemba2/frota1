@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertVehicleSchema, insertDriverSchema, insertTripSchema, insertMaintenanceSchema, insertAlertSchema, insertSupplierSchema, insertFuelLogSchema } from "@shared/schema";
+import { insertVehicleSchema, insertDriverSchema, insertTripSchema, insertMaintenanceSchema, insertAlertSchema, insertSupplierSchema, insertFuelLogSchema, insertBankAccountSchema, insertTransactionSchema } from "@shared/schema";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -748,6 +748,141 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Erro ao excluir abastecimento" });
+    }
+  });
+
+  // ==================== FINANCE ROUTES ====================
+
+  // Bank Accounts
+  app.get("/api/finance/accounts", async (req, res) => {
+    try {
+      const accounts = await storage.getBankAccounts();
+      res.json(accounts);
+    } catch (error) {
+      console.error("Error fetching bank accounts:", error);
+      res.status(500).json({ error: "Erro ao buscar contas bancárias" });
+    }
+  });
+
+  app.get("/api/finance/accounts/:id", async (req, res) => {
+    try {
+      const account = await storage.getBankAccount(req.params.id);
+      if (!account) {
+        return res.status(404).json({ error: "Conta não encontrada" });
+      }
+      res.json(account);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar conta bancária" });
+    }
+  });
+
+  app.post("/api/finance/accounts", async (req, res) => {
+    try {
+      const parsed = insertBankAccountSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Dados inválidos", details: parsed.error });
+      }
+      const account = await storage.createBankAccount(parsed.data);
+      res.status(201).json(account);
+    } catch (error) {
+      console.error("Error creating bank account:", error);
+      res.status(500).json({ error: "Erro ao criar conta bancária" });
+    }
+  });
+
+  app.patch("/api/finance/accounts/:id", async (req, res) => {
+    try {
+      const account = await storage.updateBankAccount(req.params.id, req.body);
+      if (!account) {
+        return res.status(404).json({ error: "Conta não encontrada" });
+      }
+      res.json(account);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao atualizar conta bancária" });
+    }
+  });
+
+  app.delete("/api/finance/accounts/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteBankAccount(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Conta não encontrada" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao excluir conta bancária" });
+    }
+  });
+
+  // Transactions
+  app.get("/api/finance/transactions", async (req, res) => {
+    try {
+      const allTransactions = await storage.getTransactions();
+      res.json(allTransactions);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      res.status(500).json({ error: "Erro ao buscar transações" });
+    }
+  });
+
+  app.get("/api/finance/transactions/:id", async (req, res) => {
+    try {
+      const transaction = await storage.getTransaction(req.params.id);
+      if (!transaction) {
+        return res.status(404).json({ error: "Transação não encontrada" });
+      }
+      res.json(transaction);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar transação" });
+    }
+  });
+
+  app.post("/api/finance/transactions", async (req, res) => {
+    try {
+      const parsed = insertTransactionSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Dados inválidos", details: parsed.error });
+      }
+      const transaction = await storage.createTransaction(parsed.data);
+      res.status(201).json(transaction);
+    } catch (error) {
+      console.error("Error creating transaction:", error);
+      res.status(500).json({ error: "Erro ao criar transação" });
+    }
+  });
+
+  app.patch("/api/finance/transactions/:id", async (req, res) => {
+    try {
+      const transaction = await storage.updateTransaction(req.params.id, req.body);
+      if (!transaction) {
+        return res.status(404).json({ error: "Transação não encontrada" });
+      }
+      res.json(transaction);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao atualizar transação" });
+    }
+  });
+
+  app.delete("/api/finance/transactions/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteTransaction(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Transação não encontrada" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao excluir transação" });
+    }
+  });
+
+  // Finance Summary
+  app.get("/api/finance/summary", async (req, res) => {
+    try {
+      const summary = await storage.getFinanceSummary();
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching finance summary:", error);
+      res.status(500).json({ error: "Erro ao buscar resumo financeiro" });
     }
   });
 

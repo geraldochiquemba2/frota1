@@ -179,3 +179,45 @@ export const insertFuelLogSchema = createInsertSchema(fuelLogs).omit({
 
 export type InsertFuelLog = z.infer<typeof insertFuelLogSchema>;
 export type FuelLog = typeof fuelLogs.$inferSelect;
+
+// Bank Accounts table
+export const bankAccounts = pgTable("bank_accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 200 }).notNull(),
+  bank: varchar("bank", { length: 100 }),
+  accountNumber: varchar("account_number", { length: 50 }),
+  balance: real("balance").default(0),
+  isActive: boolean("is_active").default(true),
+  notes: text("notes"),
+});
+
+export const insertBankAccountSchema = createInsertSchema(bankAccounts).omit({
+  id: true,
+});
+
+export type InsertBankAccount = z.infer<typeof insertBankAccountSchema>;
+export type BankAccount = typeof bankAccounts.$inferSelect;
+
+// Transactions table
+export const transactions = pgTable("transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bankAccountId: varchar("bank_account_id"),
+  type: varchar("type", { length: 20 }).notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
+  amount: real("amount").notNull(),
+  date: timestamp("date").notNull().defaultNow(),
+  description: text("description"),
+  vehicleId: varchar("vehicle_id"),
+  vehiclePlate: varchar("vehicle_plate", { length: 20 }),
+  supplierId: varchar("supplier_id"),
+  tripId: varchar("trip_id"),
+  invoiceRef: varchar("invoice_ref", { length: 100 }),
+});
+
+export const insertTransactionSchema = createInsertSchema(transactions).omit({
+  id: true,
+  date: true,
+});
+
+export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+export type Transaction = typeof transactions.$inferSelect;

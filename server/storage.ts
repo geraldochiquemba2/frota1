@@ -7,10 +7,12 @@ import {
   type Alert, type InsertAlert,
   type Supplier, type InsertSupplier,
   type FuelLog, type InsertFuelLog,
-  adminUsers, vehicles, drivers, trips, maintenance, alerts, suppliers, fuelLogs
+  type BankAccount, type InsertBankAccount,
+  type Transaction, type InsertTransaction,
+  adminUsers, vehicles, drivers, trips, maintenance, alerts, suppliers, fuelLogs, bankAccounts, transactions
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   // Admin Users
@@ -83,6 +85,27 @@ export interface IStorage {
     totalCost: number;
     avgEfficiency: number;
     recentLogs: FuelLog[];
+  }>;
+
+  // Bank Accounts
+  getBankAccounts(): Promise<BankAccount[]>;
+  getBankAccount(id: string): Promise<BankAccount | undefined>;
+  createBankAccount(account: InsertBankAccount): Promise<BankAccount>;
+  updateBankAccount(id: string, account: Partial<InsertBankAccount>): Promise<BankAccount | undefined>;
+  deleteBankAccount(id: string): Promise<boolean>;
+
+  // Transactions
+  getTransactions(): Promise<Transaction[]>;
+  getTransaction(id: string): Promise<Transaction | undefined>;
+  getTransactionsByPeriod(startDate: Date, endDate: Date): Promise<Transaction[]>;
+  createTransaction(transaction: InsertTransaction): Promise<Transaction>;
+  updateTransaction(id: string, transaction: Partial<InsertTransaction>): Promise<Transaction | undefined>;
+  deleteTransaction(id: string): Promise<boolean>;
+  getFinanceSummary(): Promise<{
+    totalIncome: number;
+    totalExpenses: number;
+    balance: number;
+    monthTransactions: number;
   }>;
 }
 
@@ -373,6 +396,95 @@ export class DatabaseStorage implements IStorage {
       totalCost,
       avgEfficiency,
       recentLogs: allLogs.slice(0, 5),
+    };
+  }
+
+  // Bank Accounts
+  async getBankAccounts(): Promise<BankAccount[]> {
+    return db.select().from(bankAccounts);
+  }
+
+  async getBankAccount(id: string): Promise<BankAccount | undefined> {
+    const [account] = await db.select().from(bankAccounts).where(eq(bankAccounts.id, id));
+    return account;
+  }
+
+  async createBankAccount(account: InsertBankAccount): Promise<BankAccount> {
+    const [newAccount] = await db.insert(bankAccounts).values(account).returning();
+    return newAccount;
+  }
+
+  async updateBankAccount(id: string, account: Partial<InsertBankAccount>): Promise<BankAccount | undefined> {
+    const [updated] = await db.update(bankAccounts).set(account).where(eq(bankAccounts.id, id)).returning();
+    return updated;
+  }
+
+  async deleteBankAccount(id: string): Promise<boolean> {
+    const result = await db.delete(bankAccounts).where(eq(bankAccounts.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // Transactions
+  async getTransactions(): Promise<Transaction[]> {
+    return db.select().from(transactions).orderBy(desc(transactions.date));
+  }
+
+  async getTransaction(id: string): Promise<Transaction | undefined> {
+    const [transaction] = await db.select().from(transactions).where(eq(transactions.id, id));
+    return transaction;
+  }
+
+  async getTransactionsByPeriod(startDate: Date, endDate: Date): Promise<Transaction[]> {
+    return db.select().from(transactions)
+      .where(and(
+        gte(transactions.date, startDate),
+        lte(transactions.date, endDate)
+      ))
+      .orderBy(desc(transactions.date));
+  }
+
+  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
+    const [newTransaction] = await db.insert(transactions).values(transaction).returning();
+    return newTransaction;
+  }
+
+  async updateTransaction(id: string, transaction: Partial<InsertTransaction>): Promise<Transaction | undefined> {
+    const [updated] = await db.update(transactions).set(transaction).where(eq(transactions.id, id)).returning();
+    return updated;
+  }
+
+  async deleteTransaction(id: string): Promise<boolean> {
+    const result = await db.delete(transactions).where(eq(transactions.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getFinanceSummary(): Promise<{
+    totalIncome: number;
+    totalExpenses: number;
+    balance: number;
+    monthTransactions: number;
+  }> {
+    const allTransactions = await db.select().from(transactions);
+    
+    const totalIncome = allTransactions
+      .filter(t => t.type === "income")
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+    
+    const totalExpenses = allTransactions
+      .filter(t => t.type === "expense")
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+    
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthTransactions = allTransactions.filter(
+      t => new Date(t.date) >= startOfMonth
+    ).length;
+
+    return {
+      totalIncome,
+      totalExpenses,
+      balance: totalIncome - totalExpenses,
+      monthTransactions,
     };
   }
 }
