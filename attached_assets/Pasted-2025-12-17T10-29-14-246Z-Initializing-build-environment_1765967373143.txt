@@ -1,0 +1,32 @@
+2025-12-17T10:29:14.246Z	Initializing build environment...
+2025-12-17T10:29:16.159Z	Success: Finished initializing build environment
+2025-12-17T10:29:16.644Z	Cloning repository...
+2025-12-17T10:29:17.357Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2025-12-17T10:29:17.360Z	Restoring from dependencies cache
+2025-12-17T10:29:17.365Z	Restoring from build output cache
+2025-12-17T10:29:17.657Z	Installing project dependencies: npm clean-install --progress=false
+2025-12-17T10:29:18.681Z	npm error code EUSAGE
+2025-12-17T10:29:18.682Z	npm error
+2025-12-17T10:29:18.682Z	npm error The `npm ci` command can only install with an existing package-lock.json or
+2025-12-17T10:29:18.683Z	npm error npm-shrinkwrap.json with lockfileVersion >= 1. Run an install with npm@5 or
+2025-12-17T10:29:18.683Z	npm error later to generate a package-lock.json file, then try again.
+2025-12-17T10:29:18.683Z	npm error
+2025-12-17T10:29:18.683Z	npm error Clean install a project
+2025-12-17T10:29:18.683Z	npm error
+2025-12-17T10:29:18.683Z	npm error Usage:
+2025-12-17T10:29:18.683Z	npm error npm ci
+2025-12-17T10:29:18.683Z	npm error
+2025-12-17T10:29:18.684Z	npm error Options:
+2025-12-17T10:29:18.684Z	npm error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]
+2025-12-17T10:29:18.684Z	npm error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]
+2025-12-17T10:29:18.684Z	npm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]
+2025-12-17T10:29:18.684Z	npm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]
+2025-12-17T10:29:18.684Z	npm error [--no-bin-links] [--no-fund] [--dry-run]
+2025-12-17T10:29:18.685Z	npm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]
+2025-12-17T10:29:18.685Z	npm error [-ws|--workspaces] [--include-workspace-root] [--install-links]
+2025-12-17T10:29:18.688Z	npm error
+2025-12-17T10:29:18.688Z	npm error aliases: clean-install, ic, install-clean, isntall-clean
+2025-12-17T10:29:18.688Z	npm error
+2025-12-17T10:29:18.688Z	npm error Run "npm help ci" for more info
+2025-12-17T10:29:18.688Z	npm error A complete log of this run can be found in: /opt/buildhome/.npm/_logs/2025-12-17T10_29_18_104Z-debug-0.log
+2025-12-17T10:29:18.730Z	Failed: error occurred while installing tools or dependencies
