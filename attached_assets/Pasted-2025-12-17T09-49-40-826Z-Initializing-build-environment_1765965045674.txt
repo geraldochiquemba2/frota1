@@ -1,0 +1,77 @@
+2025-12-17T09:49:40.826Z	Initializing build environment...
+2025-12-17T09:49:46.824Z	Success: Finished initializing build environment
+2025-12-17T09:49:47.115Z	Cloning repository...
+2025-12-17T09:49:48.242Z	Restoring from dependencies cache
+2025-12-17T09:49:48.245Z	Restoring from build output cache
+2025-12-17T09:49:48.249Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2025-12-17T09:49:49.300Z	Success: Dependencies restored from build cache.
+2025-12-17T09:49:49.395Z	Installing project dependencies: npm clean-install --progress=false
+2025-12-17T09:49:40.826Z	Initializing build environment...
+2025-12-17T09:49:46.824Z	Success: Finished initializing build environment
+2025-12-17T09:49:47.115Z	Cloning repository...
+2025-12-17T09:49:48.242Z	Restoring from dependencies cache
+2025-12-17T09:49:48.245Z	Restoring from build output cache
+2025-12-17T09:49:48.249Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2025-12-17T09:49:49.300Z	Success: Dependencies restored from build cache.
+2025-12-17T09:49:49.395Z	Installing project dependencies: npm clean-install --progress=false
+2025-12-17T09:49:51.888Z	npm warn deprecated rollup-plugin-inject@3.0.2: This package has been deprecated and is no longer maintained. Please use @rollup/plugin-inject.
+2025-12-17T09:49:51.903Z	npm warn deprecated sourcemap-codec@1.4.8: Please use @jridgewell/sourcemap-codec instead
+2025-12-17T09:49:54.123Z	
+2025-12-17T09:49:54.123Z	added 80 packages, and audited 81 packages in 4s
+2025-12-17T09:49:54.123Z	
+2025-12-17T09:49:54.123Z	10 packages are looking for funding
+2025-12-17T09:49:54.123Z	  run `npm fund` for details
+2025-12-17T09:49:54.157Z	
+2025-12-17T09:49:54.157Z	2 moderate severity vulnerabilities
+2025-12-17T09:49:54.157Z	
+2025-12-17T09:49:54.157Z	To address all issues (including breaking changes), run:
+2025-12-17T09:49:54.157Z	  npm audit fix --force
+2025-12-17T09:49:54.157Z	
+2025-12-17T09:49:54.157Z	Run `npm audit` for details.
+2025-12-17T09:49:54.312Z	Executing user build command: npm install
+2025-12-17T09:49:55.950Z	
+2025-12-17T09:49:55.950Z	up to date, audited 81 packages in 1s
+2025-12-17T09:49:55.950Z	
+2025-12-17T09:49:55.950Z	10 packages are looking for funding
+2025-12-17T09:49:55.950Z	  run `npm fund` for details
+2025-12-17T09:49:55.971Z	
+2025-12-17T09:49:55.973Z	2 moderate severity vulnerabilities
+2025-12-17T09:49:55.973Z	
+2025-12-17T09:49:55.973Z	To address all issues (including breaking changes), run:
+2025-12-17T09:49:55.973Z	  npm audit fix --force
+2025-12-17T09:49:55.973Z	
+2025-12-17T09:49:55.974Z	Run `npm audit` for details.
+2025-12-17T09:49:55.986Z	Success: Build command completed
+2025-12-17T09:49:56.091Z	Executing user deploy command: npx wrangler deploy
+2025-12-17T09:50:10.229Z	
+2025-12-17T09:50:10.230Z	 ⛅️ wrangler 3.114.15 (update available 4.55.0)
+2025-12-17T09:50:10.231Z	-----------------------------------------------
+2025-12-17T09:50:10.231Z	
+2025-12-17T09:50:10.288Z	▲ [WARNING] The version of Wrangler you are using is now out-of-date.
+2025-12-17T09:50:10.288Z	
+2025-12-17T09:50:10.288Z	  Please update to the latest version to prevent critical errors.
+2025-12-17T09:50:10.288Z	  Run `npm install --save-dev wrangler@4` to update to the latest version.
+2025-12-17T09:50:10.288Z	  After installation, run Wrangler with `npx wrangler`.
+2025-12-17T09:50:10.288Z	
+2025-12-17T09:50:10.289Z	
+2025-12-17T09:50:12.145Z	▲ [WARNING] You are about to publish a Workers Service that was last published via the Cloudflare Dashboard.
+2025-12-17T09:50:12.146Z	
+2025-12-17T09:50:12.146Z	  Edits that have been made via the dashboard will be overridden by your local code and config.
+2025-12-17T09:50:12.146Z	
+2025-12-17T09:50:12.146Z	
+2025-12-17T09:50:12.146Z	? Would you like to continue?
+2025-12-17T09:50:12.146Z	🤖 Using fallback value in non-interactive context: yes
+2025-12-17T09:50:12.768Z	Total Upload: 688.14 KiB / gzip: 144.92 KiB
+2025-12-17T09:50:15.274Z	Worker Startup Time: 20 ms
+2025-12-17T09:50:15.275Z	Your worker has access to the following bindings:
+2025-12-17T09:50:15.275Z	- Vars:
+2025-12-17T09:50:15.275Z	  - ENVIRONMENT: "production"
+2025-12-17T09:50:15.277Z	Uploaded frota (3.13 sec)
+2025-12-17T09:50:16.037Z	Deployed frota triggers (0.34 sec)
+2025-12-17T09:50:16.037Z	  https://frota.20230043.workers.dev
+2025-12-17T09:50:16.037Z	Current Version ID: 4789d2fe-2d65-4a68-bdb4-7611940d35af
+2025-12-17T09:50:16.037Z	
+2025-12-17T09:50:16.037Z	Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+2025-12-17T09:50:16.114Z	Success: Deploy command completed
+2025-12-17T09:50:16.117Z	Skipping build output cache as it's not supported for your project
+2025-12-17T09:50:16.219Z	✨ Success! Build completed.
