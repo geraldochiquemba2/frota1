@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { 
@@ -19,32 +18,14 @@ import {
   Square, 
   Route,
   Gauge,
-  User,
   CheckCircle,
   AlertTriangle,
   Navigation,
   Camera,
   Target,
-  MapPinned
+  Loader2
 } from "lucide-react";
 
-// Lista de cidades populares para quando o GPS não funciona
-const POPULAR_LOCATIONS = [
-  { name: "Luanda, Angola", lat: -8.8390, lng: 13.2894 },
-  { name: "Viana, Luanda", lat: -8.9035, lng: 13.3722 },
-  { name: "Cacuaco, Luanda", lat: -8.7833, lng: 13.3667 },
-  { name: "Belas, Luanda", lat: -8.8917, lng: 13.1833 },
-  { name: "Cazenga, Luanda", lat: -8.8333, lng: 13.2833 },
-  { name: "Talatona, Luanda", lat: -8.9167, lng: 13.2000 },
-  { name: "Kilamba, Luanda", lat: -8.9333, lng: 13.2167 },
-  { name: "Benguela, Angola", lat: -12.5763, lng: 13.4055 },
-  { name: "Lobito, Angola", lat: -12.3644, lng: 13.5458 },
-  { name: "Huambo, Angola", lat: -12.7761, lng: 15.7392 },
-  { name: "Lubango, Angola", lat: -14.9167, lng: 13.5000 },
-  { name: "Cabinda, Angola", lat: -5.5500, lng: 12.2000 },
-  { name: "Malanje, Angola", lat: -9.5402, lng: 16.3410 },
-  { name: "Namibe, Angola", lat: -15.1961, lng: 12.1522 },
-];
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Driver, Trip, Alert, Vehicle } from "@shared/schema";
@@ -58,204 +39,102 @@ export default function DriverDashboard() {
   const [endLocation, setEndLocation] = useState("");
   const [endOdometer, setEndOdometer] = useState("");
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [gettingLocation, setGettingLocation] = useState(false);
+  const [gpsStatus, setGpsStatus] = useState<"idle" | "requesting" | "active" | "error">("idle");
+  const [gpsError, setGpsError] = useState<string | null>(null);
   const [trackingActive, setTrackingActive] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const watchIdRef = useRef<number | null>(null);
+  const hasRequestedGps = useRef(false);
 
-  // Fallback: Get location from IP address (try multiple services)
-  const getLocationFromIP = async (): Promise<{ lat: number; lng: number; city: string } | null> => {
-    // Try ipapi.co first
-    try {
-      const response = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(8000) });
-      const data = await response.json();
-      if (data.latitude && data.longitude) {
-        return {
-          lat: data.latitude,
-          lng: data.longitude,
-          city: data.city || data.region || "Localização aproximada"
-        };
-      }
-    } catch (e) {
-      console.log("ipapi.co failed:", e);
-    }
-    
-    // Try ip-api.com as backup
-    try {
-      const response = await fetch("http://ip-api.com/json/?fields=status,city,regionName,lat,lon", { signal: AbortSignal.timeout(8000) });
-      const data = await response.json();
-      if (data.status === "success" && data.lat && data.lon) {
-        return {
-          lat: data.lat,
-          lng: data.lon,
-          city: data.city || data.regionName || "Localização aproximada"
-        };
-      }
-    } catch (e) {
-      console.log("ip-api.com failed:", e);
-    }
-    
-    return null;
-  };
-
-  const getCurrentLocation = async () => {
-    setGettingLocation(true);
-    
-    // CRITICAL: Check if we're in a secure context (HTTPS required for geolocation on mobile)
-    if (!window.isSecureContext) {
-      toast({
-        title: "Site não seguro",
-        description: "O GPS só funciona em sites HTTPS. Aceda ao site pelo link oficial do Replit (URL que termina em .replit.app ou .replit.dev).",
-        variant: "destructive",
-      });
-      
-      // Try IP fallback anyway
-      const ipLocation = await getLocationFromIP();
-      if (ipLocation) {
-        setGpsCoords({ lat: ipLocation.lat, lng: ipLocation.lng });
-        setStartLocation(ipLocation.city);
-        toast({
-          title: "Localização aproximada",
-          description: `Usámos a internet para estimar: ${ipLocation.city}`,
-        });
-      }
-      setGettingLocation(false);
-      return;
-    }
-
-    // Check geolocation support
+  // Start GPS tracking immediately when component mounts
+  const startGpsTracking = () => {
     if (!("geolocation" in navigator)) {
-      toast({
-        title: "GPS não suportado",
-        description: "Este navegador não suporta GPS. Use Chrome ou Safari.",
-        variant: "destructive",
-      });
-      setGettingLocation(false);
+      setGpsStatus("error");
+      setGpsError("GPS não suportado neste navegador");
       return;
     }
 
-    // Check permission status first
-    try {
-      if ("permissions" in navigator) {
-        const permission = await navigator.permissions.query({ name: "geolocation" });
-        if (permission.state === "denied") {
-          toast({
-            title: "GPS bloqueado pelo navegador",
-            description: "Vá às Configurações do navegador, procure por Localização/Sites, e permita este site. Depois recarregue a página.",
-            variant: "destructive",
-          });
-          setGettingLocation(false);
-          return;
-        }
-      }
-    } catch {
-      // Permissions API not supported, continue anyway
-    }
-    
-    // Try GPS
-    const getLocationPromise = (highAccuracy: boolean, timeoutMs: number): Promise<GeolocationPosition> => {
-      return new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: highAccuracy,
-          timeout: timeoutMs,
-          maximumAge: 120000
-        });
-      });
-    };
+    setGpsStatus("requesting");
+    setGpsError(null);
 
-    let lastError: GeolocationPositionError | null = null;
-    
-    // Try GPS with multiple strategies
-    for (const attempt of [
-      { highAccuracy: true, timeout: 25000 },
-      { highAccuracy: false, timeout: 20000 },
-      { highAccuracy: false, timeout: 15000 }
-    ]) {
-      try {
-        const position = await getLocationPromise(attempt.highAccuracy, attempt.timeout);
+    // Use watchPosition for continuous updates - more reliable than getCurrentPosition on mobile
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+    }
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (position) => {
         const { latitude, longitude } = position.coords;
         setGpsCoords({ lat: latitude, lng: longitude });
+        setGpsStatus("active");
+        setGpsError(null);
         
-        // Get address from coordinates
-        try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-            { signal: AbortSignal.timeout(8000) }
-          );
-          const data = await response.json();
-          if (data.display_name) {
-            setStartLocation(data.display_name.split(",").slice(0, 3).join(", "));
-          } else {
-            setStartLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-          }
-        } catch {
+        // Set start location if not set yet
+        if (!startLocation) {
           setStartLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+          // Try to get address name in background
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.display_name) {
+                setStartLocation(data.display_name.split(",").slice(0, 3).join(", "));
+              }
+            })
+            .catch(() => {});
         }
+      },
+      (error) => {
+        console.error("GPS error:", error.code, error.message);
+        setGpsStatus("error");
         
-        toast({
-          title: "Localização obtida com sucesso",
-          description: "O GPS detectou a sua posição.",
-        });
-        setGettingLocation(false);
-        return;
-      } catch (e) {
-        lastError = e as GeolocationPositionError;
-        console.log(`GPS attempt failed (highAccuracy=${attempt.highAccuracy}):`, lastError.code, lastError.message);
+        switch (error.code) {
+          case 1: // PERMISSION_DENIED
+            setGpsError("GPS bloqueado. Permita o acesso à localização nas configurações do navegador.");
+            toast({
+              title: "GPS bloqueado",
+              description: "Permita o acesso à localização nas configurações do seu navegador/telemóvel.",
+              variant: "destructive",
+            });
+            break;
+          case 2: // POSITION_UNAVAILABLE
+            setGpsError("Não foi possível obter a posição. Verifique se o GPS está ligado.");
+            break;
+          case 3: // TIMEOUT
+            setGpsError("GPS demorou muito. Tente ao ar livre.");
+            break;
+          default:
+            setGpsError(error.message || "Erro de GPS desconhecido");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 30000,
+        maximumAge: 10000 // Accept positions up to 10 seconds old
       }
-    }
-
-    // GPS failed - show specific error message
-    let errorTitle = "GPS falhou";
-    let errorDescription = "";
-    
-    if (lastError) {
-      switch (lastError.code) {
-        case 1: // PERMISSION_DENIED
-          errorTitle = "Permissão negada";
-          errorDescription = "O navegador bloqueou o GPS. Verifique as permissões do site nas configurações do navegador.";
-          break;
-        case 2: // POSITION_UNAVAILABLE
-          errorTitle = "GPS indisponível";
-          errorDescription = "O telemóvel não conseguiu obter posição. Verifique se o GPS está ligado nas configurações do sistema.";
-          break;
-        case 3: // TIMEOUT
-          errorTitle = "GPS demorou muito";
-          errorDescription = "O GPS não respondeu a tempo. Tente ao ar livre ou perto de uma janela.";
-          break;
-        default:
-          errorDescription = lastError.message || "Erro desconhecido.";
-      }
-    }
-
-    // Try IP fallback
-    toast({
-      title: errorTitle,
-      description: errorDescription + " A tentar localização aproximada...",
-    });
-    
-    const ipLocation = await getLocationFromIP();
-    if (ipLocation) {
-      setGpsCoords({ lat: ipLocation.lat, lng: ipLocation.lng });
-      setStartLocation(ipLocation.city);
-      toast({
-        title: "Localização aproximada obtida",
-        description: `Usámos a internet: ${ipLocation.city}. Pode editar se necessário.`,
-      });
-      setGettingLocation(false);
-      return;
-    }
-
-    // All methods failed - use default location based on profile
-    // Use homeBase from profile, or set a default
-    const defaultLocation = profile?.homeBase || "Luanda, Angola";
-    setStartLocation(defaultLocation);
-    
-    toast({
-      title: "Localização automática",
-      description: `Usámos "${defaultLocation}" como ponto de partida. Pode editar acima se necessário.`,
-    });
-    setGettingLocation(false);
+    );
   };
+
+  // Auto-start GPS on component mount
+  useEffect(() => {
+    if (!hasRequestedGps.current) {
+      hasRequestedGps.current = true;
+      // Small delay to ensure component is fully mounted
+      const timer = setTimeout(() => {
+        startGpsTracking();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // Cleanup GPS watch on unmount
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
+  }, []);
 
   const { data: profile, isLoading: profileLoading } = useQuery<Driver>({
     queryKey: ["/api/driver/profile"],
@@ -385,61 +264,32 @@ export default function DriverDashboard() {
     },
     onSuccess: () => {
       // Invalidate to keep driver UI and map in sync
-      queryClient.invalidateQueries({ queryKey: ["/api/driver/trips/active"] });
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
     },
   });
 
   const lastUpdateRef = useRef<number>(0);
-  const UPDATE_INTERVAL = 10000; // Only update every 10 seconds
+  const UPDATE_INTERVAL = 5000; // Update every 5 seconds for real-time tracking
 
+  // Send location updates to server when there's an active trip
   useEffect(() => {
-    if (activeTrip && activeTrip.status === "active" && "geolocation" in navigator) {
+    if (activeTrip && activeTrip.status === "active" && gpsCoords) {
       setTrackingActive(true);
-      // Reset throttle to ensure first GPS fix is sent immediately
-      lastUpdateRef.current = 0;
       
-      // Mobile-optimized settings for continuous tracking
-      watchIdRef.current = navigator.geolocation.watchPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setGpsCoords({ lat: latitude, lng: longitude });
-          
-          // Throttle updates to prevent excessive API calls
-          const now = Date.now();
-          if (now - lastUpdateRef.current >= UPDATE_INTERVAL) {
-            lastUpdateRef.current = now;
-            updateLocationMutation.mutate({
-              tripId: activeTrip.id,
-              currentLat: latitude,
-              currentLng: longitude,
-            });
-          }
-        },
-        (error) => {
-          console.error("GPS tracking error:", error);
-          // On mobile, if high accuracy fails, the watch will continue trying
-          // We only log the error but don't stop tracking
-          if (error.code === 3) { // TIMEOUT
-            console.log("GPS timeout during tracking, will retry automatically");
-          }
-        },
-        { 
-          enableHighAccuracy: true,
-          timeout: 60000, // Increased timeout for mobile (60 seconds)
-          maximumAge: 30000 // Accept positions up to 30 seconds old on mobile
-        }
-      );
-    }
-    
-    return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-        setTrackingActive(false);
+      // Send update immediately if enough time has passed
+      const now = Date.now();
+      if (now - lastUpdateRef.current >= UPDATE_INTERVAL) {
+        lastUpdateRef.current = now;
+        updateLocationMutation.mutate({
+          tripId: activeTrip.id,
+          currentLat: gpsCoords.lat,
+          currentLng: gpsCoords.lng,
+        });
       }
-    };
-  }, [activeTrip?.id, activeTrip?.status]);
+    } else {
+      setTrackingActive(false);
+    }
+  }, [activeTrip?.id, activeTrip?.status, gpsCoords?.lat, gpsCoords?.lng]);
 
   const handleStartTrip = (e: React.FormEvent) => {
     e.preventDefault();
@@ -647,16 +497,67 @@ export default function DriverDashboard() {
         ) : (
           <Card data-testid="card-start-trip">
             <CardHeader>
-              <CardTitle>Iniciar Nova Viagem</CardTitle>
+              <CardTitle className="flex items-center justify-between gap-2">
+                <span>Iniciar Nova Viagem</span>
+                {gpsStatus === "active" && (
+                  <Badge variant="default" className="bg-green-600">
+                    <Navigation className="h-3 w-3 mr-1" />
+                    GPS Ativo
+                  </Badge>
+                )}
+                {gpsStatus === "requesting" && (
+                  <Badge variant="secondary">
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    A obter GPS...
+                  </Badge>
+                )}
+                {gpsStatus === "error" && (
+                  <Badge variant="destructive" className="cursor-pointer" onClick={startGpsTracking}>
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    GPS Erro - Clicar para tentar
+                  </Badge>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
+              {gpsError && (
+                <div className="mb-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium">Problema com GPS:</p>
+                      <p>{gpsError}</p>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-2"
+                        onClick={startGpsTracking}
+                      >
+                        <Navigation className="h-3 w-3 mr-1" />
+                        Tentar novamente
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {gpsCoords && (
+                <div className="mb-4 p-3 rounded-md bg-green-500/10 text-green-700 dark:text-green-400 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Navigation className="h-4 w-4" />
+                    <span>GPS detectou: {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}</span>
+                  </div>
+                </div>
+              )}
+
               <form onSubmit={handleStartTrip} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="startLocation">Local de Partida</Label>
+                  <Label htmlFor="startLocation">Local de Partida (preenchido automaticamente pelo GPS)</Label>
                   <div className="flex gap-2">
                     <Input
                       id="startLocation"
-                      placeholder={gettingLocation ? "A obter localização..." : "Digite ou clique no ícone GPS"}
+                      placeholder={gpsStatus === "requesting" ? "A obter localização..." : "A localização será obtida pelo GPS"}
                       value={startLocation}
                       onChange={(e) => setStartLocation(e.target.value)}
                       data-testid="input-start-location"
@@ -664,30 +565,19 @@ export default function DriverDashboard() {
                     <Button
                       type="button"
                       size="icon"
-                      variant="outline"
-                      onClick={getCurrentLocation}
-                      disabled={gettingLocation}
+                      variant={gpsStatus === "active" ? "default" : "outline"}
+                      onClick={startGpsTracking}
+                      disabled={gpsStatus === "requesting"}
                       data-testid="button-get-location"
-                      title="Tentar GPS"
+                      title="Tentar GPS novamente"
                     >
-                      <Navigation className={`h-4 w-4 ${gettingLocation ? "animate-spin" : ""}`} />
+                      {gpsStatus === "requesting" ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Navigation className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
-                  {gettingLocation && (
-                    <p className="text-xs text-muted-foreground animate-pulse">
-                      A tentar obter localização... aguarde até 30 segundos
-                    </p>
-                  )}
-                  {gpsCoords && (
-                    <p className="text-xs text-green-600 dark:text-green-400">
-                      GPS: {gpsCoords.lat.toFixed(4)}, {gpsCoords.lng.toFixed(4)}
-                    </p>
-                  )}
-                  {!gpsCoords && !gettingLocation && (
-                    <p className="text-xs text-muted-foreground">
-                      Pode digitar o local manualmente acima
-                    </p>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="destination">Destino *</Label>
