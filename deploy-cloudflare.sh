@@ -15,7 +15,7 @@ fi
 echo "2. Copying frontend to workers/public..."
 mkdir -p workers/public
 rm -rf workers/public/*
-cp -r dist/* workers/public/
+cp -r dist/public/* workers/public/
 
 # Step 3: Deploy to Cloudflare
 echo "3. Deploying to Cloudflare Workers..."
