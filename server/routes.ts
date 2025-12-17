@@ -455,28 +455,37 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Motorista não encontrado" });
       }
 
-      // Get assigned vehicle
-      let vehicle = null;
-      if (driver.assignedVehicleId) {
-        vehicle = await storage.getVehicle(driver.assignedVehicleId);
+      // Require assigned vehicle to start trip
+      if (!driver.assignedVehicleId) {
+        return res.status(400).json({ error: "Você precisa ter uma viatura atribuída para iniciar uma viagem" });
+      }
+      
+      const vehicle = await storage.getVehicle(driver.assignedVehicleId);
+      if (!vehicle) {
+        return res.status(400).json({ error: "Viatura atribuída não encontrada" });
       }
 
-      const { startLocation, destination, purpose, startOdometer, startLat, startLng } = req.body;
+      const { startLocation, destination, purpose, startOdometer, startLat, startLng, destLat, destLng } = req.body;
+      
+      // Use vehicle's current odometer if not provided
+      const initialOdometer = startOdometer || vehicle.odometer || 0;
       
       const trip = await storage.createTrip({
-        vehicleId: vehicle?.id || "unassigned",
-        vehiclePlate: vehicle?.plate || "N/A",
+        vehicleId: vehicle.id,
+        vehiclePlate: vehicle.plate,
         driverId: driver.id,
         driverName: driver.name,
         startLocation: startLocation || driver.homeBase || "Localização não informada",
         destination: destination || null,
         purpose: purpose || "Viagem de trabalho",
         status: "active",
-        startOdometer: startOdometer || null,
+        startOdometer: initialOdometer,
         startLat: startLat || null,
         startLng: startLng || null,
         currentLat: startLat || null,
         currentLng: startLng || null,
+        destLat: destLat || null,
+        destLng: destLng || null,
       });
 
       // Update driver status
@@ -529,6 +538,15 @@ export async function registerRoutes(
         endOdometer: endOdometer || null,
         distance: distance,
       });
+
+      // Update vehicle status to idle, and odometer if provided
+      if (trip.vehicleId && trip.vehicleId !== "unassigned") {
+        const vehicleUpdate: { status: string; odometer?: number } = { status: "idle" };
+        if (endOdometer) {
+          vehicleUpdate.odometer = endOdometer;
+        }
+        await storage.updateVehicle(trip.vehicleId, vehicleUpdate);
+      }
 
       // Update driver status
       await storage.updateDriver(req.session.userId, { status: "available" });

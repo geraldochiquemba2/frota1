@@ -363,6 +363,13 @@ export default function DriverDashboard() {
     queryKey: ["/api/driver/vehicle"],
   });
 
+  // Pre-fill odometer with vehicle's current odometer
+  useEffect(() => {
+    if (vehicle?.odometer !== undefined && vehicle?.odometer !== null && startOdometer === "") {
+      setStartOdometer(vehicle.odometer.toString());
+    }
+  }, [vehicle?.odometer, startOdometer]);
+
   const startTripMutation = useMutation({
     mutationFn: async (data: { 
       startLocation: string; 
@@ -371,6 +378,8 @@ export default function DriverDashboard() {
       startOdometer?: number;
       startLat?: number;
       startLng?: number;
+      destLat?: number;
+      destLng?: number;
     }) => {
       return apiRequest("POST", "/api/driver/trips/start", data);
     },
@@ -378,9 +387,14 @@ export default function DriverDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/driver/trips/active"] });
       queryClient.invalidateQueries({ queryKey: ["/api/driver/trips"] });
       queryClient.invalidateQueries({ queryKey: ["/api/driver/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/driver/vehicle"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
       setStartLocation("");
       setDestination("");
+      setStartSelectedProvince("");
+      setStartSelectedMunicipality("");
+      setStartSelectedNeighborhood("");
       setSelectedProvince("");
       setSelectedMunicipality("");
       setSelectedNeighborhood("");
@@ -388,7 +402,7 @@ export default function DriverDashboard() {
       setStartOdometer("");
       toast({
         title: "Viagem iniciada",
-        description: "Boa viagem! A central pode ver sua localização.",
+        description: "Boa viagem! A central pode ver sua localização e rota.",
       });
     },
     onError: (error: Error) => {
@@ -440,11 +454,13 @@ export default function DriverDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/driver/trips"] });
       queryClient.invalidateQueries({ queryKey: ["/api/driver/profile"] });
       queryClient.invalidateQueries({ queryKey: ["/api/driver/alerts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/driver/vehicle"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
       setEndLocation("");
       setEndOdometer("");
       toast({
         title: "Viagem finalizada",
-        description: "Viagem registrada com sucesso!",
+        description: "Viagem registrada e odômetro atualizado!",
       });
     },
     onError: (error: Error) => {
@@ -501,8 +517,10 @@ export default function DriverDashboard() {
     }
   }, [activeTrip?.id, activeTrip?.status, gpsCoords?.lat, gpsCoords?.lng]);
 
-  const handleStartTrip = (e: React.FormEvent) => {
+  const handleStartTrip = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields first
     if (!destination) {
       toast({
         title: "Destino obrigatório",
@@ -511,6 +529,36 @@ export default function DriverDashboard() {
       });
       return;
     }
+    if (!vehicle) {
+      toast({
+        title: "Viatura não atribuída",
+        description: "Você precisa ter uma viatura atribuída para iniciar uma viagem",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Try to geocode destination for admin map route display (optional, non-blocking)
+    let destLat: number | undefined;
+    let destLng: number | undefined;
+    try {
+      const destQuery = encodeURIComponent(`${destination}, Angola`);
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${destQuery}&limit=1`,
+        { signal: AbortSignal.timeout(5000) }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          destLat = parseFloat(data[0].lat);
+          destLng = parseFloat(data[0].lon);
+        }
+      }
+    } catch (err) {
+      console.log("Could not geocode destination (continuing anyway):", err);
+    }
+    
+    // Always proceed with trip start regardless of geocoding result
     startTripMutation.mutate({
       startLocation: startLocation || profile?.homeBase || "Localização não informada",
       destination,
@@ -518,6 +566,8 @@ export default function DriverDashboard() {
       startOdometer: startOdometer ? parseInt(startOdometer) : undefined,
       startLat: gpsCoords?.lat,
       startLng: gpsCoords?.lng,
+      destLat,
+      destLng,
     });
   };
 
@@ -882,7 +932,14 @@ export default function DriverDashboard() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="startOdometer">Odômetro Inicial (km)</Label>
+                  <Label htmlFor="startOdometer">
+                    Odômetro Inicial (km)
+                    {vehicle?.odometer && (
+                      <span className="text-muted-foreground font-normal ml-2">
+                        (atual: {vehicle.odometer.toLocaleString()} km)
+                      </span>
+                    )}
+                  </Label>
                   <Input
                     id="startOdometer"
                     type="number"
@@ -892,10 +949,22 @@ export default function DriverDashboard() {
                     data-testid="input-start-odometer"
                   />
                 </div>
+                
+                {!vehicle && (
+                  <div className="p-3 rounded-md bg-yellow-500/10 border border-yellow-500/30">
+                    <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-400">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span className="text-sm font-medium">
+                        Você não tem uma viatura atribuída. Contacte o administrador.
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={startTripMutation.isPending || !destination || !startLocation}
+                  disabled={startTripMutation.isPending || !destination || !startLocation || !vehicle}
                   data-testid="button-start-trip"
                 >
                   <Play className="h-4 w-4 mr-2" />
