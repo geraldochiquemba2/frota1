@@ -70,6 +70,16 @@ authRoutes.post("/register", async (c) => {
 
 authRoutes.post("/login", async (c) => {
   try {
+    // Debug: Check if environment variables are available
+    if (!c.env.DATABASE_URL) {
+      console.error("DATABASE_URL is not defined");
+      return c.json({ error: "Configuração do servidor incompleta: DATABASE_URL" }, 500);
+    }
+    if (!c.env.JWT_SECRET) {
+      console.error("JWT_SECRET is not defined");
+      return c.json({ error: "Configuração do servidor incompleta: JWT_SECRET" }, 500);
+    }
+
     const { phone, password } = await c.req.json();
 
     if (!phone || !password) {

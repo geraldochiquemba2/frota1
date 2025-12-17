@@ -1,0 +1,92 @@
+2025-12-17T10:01:36.343Z	Initializing build environment...
+2025-12-17T10:01:38.883Z	Success: Finished initializing build environment
+2025-12-17T10:01:39.394Z	Cloning repository...
+2025-12-17T10:01:40.925Z	Restoring from dependencies cache
+2025-12-17T10:01:40.927Z	Restoring from build output cache
+2025-12-17T10:01:40.930Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2025-12-17T10:01:41.850Z	Success: Dependencies restored from build cache.
+2025-12-17T10:01:41.977Z	Installing project dependencies: npm clean-install --progress=false
+2025-12-17T10:01:44.477Z	npm warn deprecated rollup-plugin-inject@3.0.2: This package has been deprecated and is no longer maintained. Please use @rollup/plugin-inject.
+2025-12-17T10:01:44.501Z	npm warn deprecated sourcemap-codec@1.4.8: Please use @jridgewell/sourcemap-codec instead
+2025-12-17T10:01:47.465Z	
+2025-12-17T10:01:47.465Z	added 80 packages, and audited 81 packages in 5s
+2025-12-17T10:01:47.468Z	
+2025-12-17T10:01:47.468Z	10 packages are looking for funding
+2025-12-17T10:01:47.468Z	  run `npm fund` for details
+2025-12-17T10:01:47.495Z	
+2025-12-17T10:01:47.495Z	2 moderate severity vulnerabilities
+2025-12-17T10:01:47.495Z	
+2025-12-17T10:01:47.496Z	To address all issues (including breaking changes), run:
+2025-12-17T10:01:47.496Z	  npm audit fix --force
+2025-12-17T10:01:47.496Z	
+2025-12-17T10:01:47.496Z	Run `npm audit` for details.
+2025-12-17T10:01:47.730Z	Executing user build command: npm install
+2025-12-17T10:01:36.343Z	Initializing build environment...
+2025-12-17T10:01:38.883Z	Success: Finished initializing build environment
+2025-12-17T10:01:39.394Z	Cloning repository...
+2025-12-17T10:01:40.925Z	Restoring from dependencies cache
+2025-12-17T10:01:40.927Z	Restoring from build output cache
+2025-12-17T10:01:40.930Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2025-12-17T10:01:41.850Z	Success: Dependencies restored from build cache.
+2025-12-17T10:01:41.977Z	Installing project dependencies: npm clean-install --progress=false
+2025-12-17T10:01:44.477Z	npm warn deprecated rollup-plugin-inject@3.0.2: This package has been deprecated and is no longer maintained. Please use @rollup/plugin-inject.
+2025-12-17T10:01:44.501Z	npm warn deprecated sourcemap-codec@1.4.8: Please use @jridgewell/sourcemap-codec instead
+2025-12-17T10:01:47.465Z	
+2025-12-17T10:01:47.465Z	added 80 packages, and audited 81 packages in 5s
+2025-12-17T10:01:47.468Z	
+2025-12-17T10:01:47.468Z	10 packages are looking for funding
+2025-12-17T10:01:47.468Z	  run `npm fund` for details
+2025-12-17T10:01:47.495Z	
+2025-12-17T10:01:47.495Z	2 moderate severity vulnerabilities
+2025-12-17T10:01:47.495Z	
+2025-12-17T10:01:47.496Z	To address all issues (including breaking changes), run:
+2025-12-17T10:01:47.496Z	  npm audit fix --force
+2025-12-17T10:01:47.496Z	
+2025-12-17T10:01:47.496Z	Run `npm audit` for details.
+2025-12-17T10:01:47.730Z	Executing user build command: npm install
+2025-12-17T10:01:48.942Z	
+2025-12-17T10:01:48.943Z	up to date, audited 81 packages in 1s
+2025-12-17T10:01:48.943Z	
+2025-12-17T10:01:48.943Z	10 packages are looking for funding
+2025-12-17T10:01:48.943Z	  run `npm fund` for details
+2025-12-17T10:01:48.966Z	
+2025-12-17T10:01:48.967Z	2 moderate severity vulnerabilities
+2025-12-17T10:01:48.967Z	
+2025-12-17T10:01:48.967Z	To address all issues (including breaking changes), run:
+2025-12-17T10:01:48.967Z	  npm audit fix --force
+2025-12-17T10:01:48.967Z	
+2025-12-17T10:01:48.967Z	Run `npm audit` for details.
+2025-12-17T10:01:48.981Z	Success: Build command completed
+2025-12-17T10:01:49.120Z	Executing user deploy command: npx wrangler deploy
+2025-12-17T10:01:50.444Z	
+2025-12-17T10:01:50.444Z	 ⛅️ wrangler 3.114.15 (update available 4.55.0)
+2025-12-17T10:01:50.444Z	-----------------------------------------------
+2025-12-17T10:01:50.444Z	
+2025-12-17T10:01:50.511Z	▲ [WARNING] The version of Wrangler you are using is now out-of-date.
+2025-12-17T10:01:50.511Z	
+2025-12-17T10:01:50.511Z	  Please update to the latest version to prevent critical errors.
+2025-12-17T10:01:50.511Z	  Run `npm install --save-dev wrangler@4` to update to the latest version.
+2025-12-17T10:01:50.511Z	  After installation, run Wrangler with `npx wrangler`.
+2025-12-17T10:01:50.511Z	
+2025-12-17T10:01:50.511Z	
+2025-12-17T10:01:51.220Z	▲ [WARNING] You are about to publish a Workers Service that was last published via the Cloudflare Dashboard.
+2025-12-17T10:01:51.220Z	
+2025-12-17T10:01:51.220Z	  Edits that have been made via the dashboard will be overridden by your local code and config.
+2025-12-17T10:01:51.220Z	
+2025-12-17T10:01:51.220Z	
+2025-12-17T10:01:51.220Z	? Would you like to continue?
+2025-12-17T10:01:51.220Z	🤖 Using fallback value in non-interactive context: yes
+2025-12-17T10:01:51.592Z	Total Upload: 688.14 KiB / gzip: 144.92 KiB
+2025-12-17T10:01:54.218Z	Worker Startup Time: 16 ms
+2025-12-17T10:01:54.219Z	Your worker has access to the following bindings:
+2025-12-17T10:01:54.220Z	- Vars:
+2025-12-17T10:01:54.220Z	  - ENVIRONMENT: "production"
+2025-12-17T10:01:54.221Z	Uploaded frota (3.00 sec)
+2025-12-17T10:01:55.000Z	Deployed frota triggers (0.53 sec)
+2025-12-17T10:01:55.000Z	  https://frota.20230043.workers.dev
+2025-12-17T10:01:55.000Z	Current Version ID: fda984af-d93b-412a-bea4-52d21b3a0bed
+2025-12-17T10:01:55.002Z	
+2025-12-17T10:01:55.002Z	Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+2025-12-17T10:01:55.072Z	Success: Deploy command completed
+2025-12-17T10:01:55.074Z	Skipping build output cache as it's not supported for your project
+2025-12-17T10:01:55.175Z	✨ Success! Build completed.
