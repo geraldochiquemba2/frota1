@@ -250,12 +250,25 @@ export default function DriverDashboard() {
         // Set start location if not set yet
         if (!startLocationRef.current) {
           setStartLocation(`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
-          // Try to get address name in background
-          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+          // Try to get address name in background with detailed address info
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`)
             .then(res => res.json())
             .then(data => {
-              if (data.display_name && !startLocationRef.current.includes(",")) {
-                setStartLocation(data.display_name.split(",").slice(0, 3).join(", "));
+              if (data.address) {
+                const addr = data.address;
+                // Build location from most specific to least specific
+                const parts = [
+                  addr.road || addr.street || addr.pedestrian,
+                  addr.suburb || addr.neighbourhood || addr.quarter || addr.residential,
+                  addr.city || addr.town || addr.municipality || addr.village || addr.county,
+                  addr.state || addr.province || addr.region
+                ].filter(Boolean);
+                
+                if (parts.length > 0) {
+                  setStartLocation(parts.slice(0, 4).join(", "));
+                }
+              } else if (data.display_name) {
+                setStartLocation(data.display_name.split(",").slice(0, 4).join(", "));
               }
             })
             .catch(() => {});
