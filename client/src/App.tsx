@@ -59,18 +59,10 @@ function LoadingScreen() {
 }
 
 function DriverApp() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+    await logout();
   };
 
   return (
@@ -105,7 +97,7 @@ function DriverApp() {
 }
 
 function AuthenticatedApp() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   
   const sidebarStyle = {
     "--sidebar-width": "16rem",
@@ -113,15 +105,7 @@ function AuthenticatedApp() {
   };
 
   const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+    await logout();
   };
 
   const userData = user ? {
