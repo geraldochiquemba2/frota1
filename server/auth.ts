@@ -1,8 +1,30 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+import { SignJWT, jwtVerify } from "jose";
 import { storage } from "./storage";
 import type { AdminUser } from "@shared/schema";
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "fleettrack-jwt-secret-2024"
+);
+
+async function generateToken(payload: { id: string; phone: string; name: string; type: string }): Promise<string> {
+  return await new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("24h")
+    .sign(JWT_SECRET);
+}
+
+async function verifyToken(token: string): Promise<{ id: string; phone: string; name: string; type: string } | null> {
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    return payload as { id: string; phone: string; name: string; type: string };
+  } catch {
+    return null;
+  }
+}
 
 declare module "express-session" {
   interface SessionData {
@@ -71,11 +93,19 @@ export function setupAuth(app: Express): void {
       req.session.userId = newDriver.id;
       req.session.userType = "driver";
 
+      const token = await generateToken({
+        id: newDriver.id,
+        phone: newDriver.phone,
+        name: newDriver.name,
+        type: "driver",
+      });
+
       res.json({
         id: newDriver.id,
         phone: newDriver.phone,
         name: newDriver.name,
         type: "driver",
+        token,
       });
     } catch (error) {
       console.error("Register error:", error);
@@ -97,11 +127,18 @@ export function setupAuth(app: Express): void {
       if (adminUser && adminUser.password === password) {
         req.session.userId = adminUser.id;
         req.session.userType = "admin";
+        const token = await generateToken({
+          id: adminUser.id,
+          phone: adminUser.phone,
+          name: adminUser.name,
+          type: "admin",
+        });
         return res.json({
           id: adminUser.id,
           phone: adminUser.phone,
           name: adminUser.name,
           type: "admin",
+          token,
         });
       }
 
@@ -110,11 +147,18 @@ export function setupAuth(app: Express): void {
       if (driver && driver.password === password) {
         req.session.userId = driver.id;
         req.session.userType = "driver";
+        const token = await generateToken({
+          id: driver.id,
+          phone: driver.phone,
+          name: driver.name,
+          type: "driver",
+        });
         return res.json({
           id: driver.id,
           phone: driver.phone,
           name: driver.name,
           type: "driver",
+          token,
         });
       }
 
@@ -138,14 +182,32 @@ export function setupAuth(app: Express): void {
   // Get current user route
   app.get("/api/auth/user", async (req: Request, res: Response) => {
     try {
-      if (!req.session.userId) {
+      let userId: string | undefined;
+      let userType: string = "admin";
+
+      // Try JWT token first from Authorization header
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.substring(7);
+        const payload = await verifyToken(token);
+        if (payload) {
+          userId = payload.id;
+          userType = payload.type;
+        }
+      }
+
+      // Fall back to session
+      if (!userId && req.session.userId) {
+        userId = req.session.userId;
+        userType = req.session.userType || "admin";
+      }
+
+      if (!userId) {
         return res.status(401).json({ error: "Não autenticado" });
       }
 
-      const userType = req.session.userType || "admin";
-
       if (userType === "driver") {
-        const driver = await storage.getDriver(req.session.userId);
+        const driver = await storage.getDriver(userId);
         if (!driver) {
           req.session.destroy(() => {});
           return res.status(401).json({ error: "Usuário não encontrado" });
@@ -158,7 +220,7 @@ export function setupAuth(app: Express): void {
         });
       }
 
-      const user = await storage.getAdminUser(req.session.userId);
+      const user = await storage.getAdminUser(userId);
       if (!user) {
         req.session.destroy(() => {});
         return res.status(401).json({ error: "Usuário não encontrado" });
