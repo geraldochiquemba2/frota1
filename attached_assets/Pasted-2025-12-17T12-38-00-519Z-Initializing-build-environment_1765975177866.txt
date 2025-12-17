@@ -1,0 +1,116 @@
+2025-12-17T12:38:00.519Z	Initializing build environment...
+2025-12-17T12:38:00.519Z	Initializing build environment...
+2025-12-17T12:38:02.280Z	Success: Finished initializing build environment
+2025-12-17T12:38:02.641Z	Cloning repository...
+2025-12-17T12:38:03.805Z	Restoring from dependencies cache
+2025-12-17T12:38:03.807Z	Restoring from build output cache
+2025-12-17T12:38:03.810Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2025-12-17T12:38:06.266Z	Success: Dependencies restored from build cache.
+2025-12-17T12:38:06.450Z	Installing project dependencies: npm clean-install --progress=false
+2025-12-17T12:38:11.149Z	npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+2025-12-17T12:38:11.269Z	npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+2025-12-17T12:38:14.062Z	
+2025-12-17T12:38:14.063Z	added 507 packages, and audited 508 packages in 6s
+2025-12-17T12:38:14.063Z	
+2025-12-17T12:38:14.063Z	67 packages are looking for funding
+2025-12-17T12:38:14.063Z	  run `npm fund` for details
+2025-12-17T12:38:14.102Z	
+2025-12-17T12:38:14.102Z	7 vulnerabilities (1 low, 5 moderate, 1 high)
+2025-12-17T12:38:14.102Z	
+2025-12-17T12:38:14.102Z	To address issues that do not require attention, run:
+2025-12-17T12:38:14.102Z	  npm audit fix
+2025-12-17T12:38:14.102Z	
+2025-12-17T12:38:14.102Z	To address all issues (including breaking changes), run:
+2025-12-17T12:38:14.102Z	  npm audit fix --force
+2025-12-17T12:38:14.102Z	
+2025-12-17T12:38:14.102Z	Run `npm audit` for details.
+2025-12-17T12:38:14.364Z	Executing user build command: npm install && npm run build && mkdir -p workers/public && cp -r dist/public/* workers/public/
+2025-12-17T12:38:15.568Z	
+2025-12-17T12:38:15.568Z	up to date, audited 508 packages in 1s
+2025-12-17T12:38:15.568Z	
+2025-12-17T12:38:15.568Z	67 packages are looking for funding
+2025-12-17T12:38:15.569Z	  run `npm fund` for details
+2025-12-17T12:38:15.597Z	
+2025-12-17T12:38:15.598Z	7 vulnerabilities (1 low, 5 moderate, 1 high)
+2025-12-17T12:38:15.598Z	
+2025-12-17T12:38:15.599Z	To address issues that do not require attention, run:
+2025-12-17T12:38:15.600Z	  npm audit fix
+2025-12-17T12:38:15.600Z	
+2025-12-17T12:38:15.600Z	To address all issues (including breaking changes), run:
+2025-12-17T12:38:15.601Z	  npm audit fix --force
+2025-12-17T12:38:15.601Z	
+2025-12-17T12:38:15.601Z	Run `npm audit` for details.
+2025-12-17T12:38:15.858Z	
+2025-12-17T12:38:15.859Z	> rest-express@1.0.0 build
+2025-12-17T12:38:15.859Z	> tsx script/build.ts
+2025-12-17T12:38:15.859Z	
+2025-12-17T12:38:16.893Z	building client...
+2025-12-17T12:38:16.958Z	vite v5.4.20 building for production...
+2025-12-17T12:38:17.493Z	transforming...
+2025-12-17T12:38:18.775Z	
+2025-12-17T12:38:18.775Z	A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+2025-12-17T12:38:22.397Z	✓ 2577 modules transformed.
+2025-12-17T12:38:22.775Z	rendering chunks...
+2025-12-17T12:38:22.787Z	computing gzip size...
+2025-12-17T12:38:22.804Z	../dist/public/index.html                   2.58 kB │ gzip:   0.97 kB
+2025-12-17T12:38:22.805Z	../dist/public/assets/index-CM7b5IOZ.css   79.71 kB │ gzip:  12.74 kB
+2025-12-17T12:38:22.805Z	../dist/public/assets/index-CG1dHLyZ.js   671.97 kB │ gzip: 196.48 kB
+2025-12-17T12:38:22.805Z	
+2025-12-17T12:38:22.805Z	(!) Some chunks are larger than 500 kB after minification. Consider:
+2025-12-17T12:38:22.805Z	- Using dynamic import() to code-split the application
+2025-12-17T12:38:22.805Z	- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+2025-12-17T12:38:22.805Z	- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+2025-12-17T12:38:22.805Z	✓ built in 5.34s
+2025-12-17T12:38:22.805Z	building server...
+2025-12-17T12:38:22.988Z	
+2025-12-17T12:38:22.988Z	  dist/index.cjs  1.1mb ⚠️
+2025-12-17T12:38:22.988Z	
+2025-12-17T12:38:22.988Z	⚡ Done in 173ms
+2025-12-17T12:38:23.242Z	Success: Build command completed
+2025-12-17T12:38:23.429Z	Executing user deploy command: cd workers && npm install && npx wrangler deploy
+
+2025-12-17T12:38:24.867Z	npm warn deprecated rollup-plugin-inject@3.0.2: This package has been deprecated and is no longer maintained. Please use @rollup/plugin-inject.
+2025-12-17T12:38:24.893Z	npm warn deprecated sourcemap-codec@1.4.8: Please use @jridgewell/sourcemap-codec instead
+2025-12-17T12:38:26.805Z	
+2025-12-17T12:38:26.805Z	added 82 packages, and audited 83 packages in 3s
+2025-12-17T12:38:26.805Z	
+2025-12-17T12:38:26.808Z	10 packages are looking for funding
+2025-12-17T12:38:26.808Z	  run `npm fund` for details
+2025-12-17T12:38:26.836Z	
+2025-12-17T12:38:26.836Z	2 moderate severity vulnerabilities
+2025-12-17T12:38:26.836Z	
+2025-12-17T12:38:26.837Z	To address all issues (including breaking changes), run:
+2025-12-17T12:38:26.837Z	  npm audit fix --force
+2025-12-17T12:38:26.837Z	
+2025-12-17T12:38:26.837Z	Run `npm audit` for details.
+2025-12-17T12:38:30.100Z	
+2025-12-17T12:38:30.100Z	 ⛅️ wrangler 3.114.15 (update available 4.55.0)
+2025-12-17T12:38:30.100Z	-----------------------------------------------
+2025-12-17T12:38:30.100Z	
+2025-12-17T12:38:30.150Z	▲ [WARNING] The version of Wrangler you are using is now out-of-date.
+2025-12-17T12:38:30.151Z	
+2025-12-17T12:38:30.151Z	  Please update to the latest version to prevent critical errors.
+2025-12-17T12:38:30.151Z	  Run `npm install --save-dev wrangler@4` to update to the latest version.
+2025-12-17T12:38:30.151Z	  After installation, run Wrangler with `npx wrangler`.
+2025-12-17T12:38:30.152Z	
+2025-12-17T12:38:30.152Z	
+2025-12-17T12:38:30.176Z	▲ [WARNING] Failed to match Worker name. Your config file is using the Worker name "frota", but the CI system expected "frota1". Overriding using the CI provided Worker name. Workers Builds connected builds will attempt to open a pull request to resolve this config name mismatch.
+2025-12-17T12:38:30.176Z	
+2025-12-17T12:38:30.176Z	
+2025-12-17T12:38:31.048Z	🌀 Building list of assets...
+2025-12-17T12:38:31.060Z	🌀 Starting asset upload...
+2025-12-17T12:38:32.690Z	No files to upload. Proceeding with deployment...
+2025-12-17T12:38:32.707Z	Total Upload: 684.31 KiB / gzip: 143.19 KiB
+2025-12-17T12:38:35.108Z	Worker Startup Time: 20 ms
+2025-12-17T12:38:35.109Z	Your worker has access to the following bindings:
+2025-12-17T12:38:35.109Z	- Vars:
+2025-12-17T12:38:35.109Z	  - ENVIRONMENT: "production"
+2025-12-17T12:38:35.111Z	Uploaded frota1 (4.36 sec)
+2025-12-17T12:38:35.644Z	Deployed frota1 triggers (0.22 sec)
+2025-12-17T12:38:35.645Z	  https://frota1.staqw.workers.dev
+2025-12-17T12:38:35.645Z	Current Version ID: 46fb17c0-63f7-4613-b784-5461d8d447bb
+2025-12-17T12:38:35.646Z	
+2025-12-17T12:38:35.646Z	Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+2025-12-17T12:38:35.704Z	Success: Deploy command completed
+2025-12-17T12:38:35.705Z	Skipping build output cache as it's not supported for your project
+2025-12-17T12:38:35.864Z	✨ Success! Build completed.
