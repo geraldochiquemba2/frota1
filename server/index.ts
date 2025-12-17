@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -12,6 +13,24 @@ declare module "http" {
     rawBody: unknown;
   }
 }
+
+// CORS configuration for cross-origin requests (Cloudflare Workers)
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    // Allow all origins in development, or check allowed list in production
+    if (process.env.NODE_ENV !== "production" || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    // Also allow the same origin
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 
 app.use(
   express.json({
