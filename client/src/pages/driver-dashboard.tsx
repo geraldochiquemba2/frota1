@@ -39,10 +39,11 @@ export default function DriverDashboard() {
   const [endLocation, setEndLocation] = useState("");
   const [endOdometer, setEndOdometer] = useState("");
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [gpsStatus, setGpsStatus] = useState<"needs_permission" | "requesting" | "active" | "error">("needs_permission");
+  const [gpsStatus, setGpsStatus] = useState<"needs_permission" | "requesting" | "active" | "error" | "ip_fallback">("needs_permission");
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [trackingActive, setTrackingActive] = useState(false);
   const [permissionState, setPermissionState] = useState<"prompt" | "granted" | "denied" | "unknown">("unknown");
+  const [usingIpLocation, setUsingIpLocation] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const watchIdRef = useRef<number | null>(null);
   const startLocationRef = useRef(startLocation);
@@ -52,21 +53,62 @@ export default function DriverDashboard() {
     startLocationRef.current = startLocation;
   }, [startLocation]);
 
+  // Get location by IP address as fallback
+  const getLocationByIP = async () => {
+    try {
+      setGpsStatus("requesting");
+      console.log("IP Location: Fetching location by IP...");
+      
+      const response = await fetch("https://ipapi.co/json/");
+      if (!response.ok) throw new Error("Failed to fetch IP location");
+      
+      const data = await response.json();
+      console.log("IP Location: Got data", data);
+      
+      if (data.latitude && data.longitude) {
+        setGpsCoords({ lat: data.latitude, lng: data.longitude });
+        setGpsStatus("ip_fallback");
+        setUsingIpLocation(true);
+        setGpsError(null);
+        
+        // Set location with city/region info
+        const locationName = [data.city, data.region, data.country_name]
+          .filter(Boolean)
+          .join(", ");
+        
+        if (!startLocationRef.current) {
+          setStartLocation(locationName || `${data.latitude.toFixed(5)}, ${data.longitude.toFixed(5)}`);
+        }
+        
+        toast({
+          title: "Localização por IP",
+          description: `Localização aproximada: ${data.city || "sua região"}`,
+        });
+        
+        return true;
+      }
+      throw new Error("No location data");
+    } catch (error) {
+      console.error("IP Location: Error", error);
+      setGpsStatus("error");
+      setGpsError("Não foi possível obter localização. Por favor, digite manualmente.");
+      return false;
+    }
+  };
+
   // Check permission state on mount
   useEffect(() => {
     const checkPermission = async () => {
       // Check secure context first
       if (!window.isSecureContext) {
-        console.error("GPS: Not a secure context (HTTPS required)");
-        setGpsStatus("error");
-        setGpsError(`Site não seguro (HTTP). Abra: ${window.location.origin.replace('http:', 'https:')}`);
+        console.log("GPS: Not secure context, trying IP location...");
+        await getLocationByIP();
         return;
       }
       
       if (!("geolocation" in navigator)) {
-        console.error("GPS: Geolocation API not available");
-        setGpsStatus("error");
-        setGpsError("Este navegador não suporta GPS");
+        console.log("GPS: Not available, trying IP location...");
+        await getLocationByIP();
         return;
       }
       
@@ -83,8 +125,8 @@ export default function DriverDashboard() {
             console.log("GPS: Permission already granted, starting tracking...");
             startGpsTracking();
           } else if (result.state === "denied") {
-            setGpsStatus("error");
-            setGpsError("GPS bloqueado. Vá às Configurações do navegador e permita a localização para este site.");
+            console.log("GPS: Permission denied, trying IP location...");
+            await getLocationByIP();
           }
           
           // Listen for permission changes
@@ -163,35 +205,26 @@ export default function DriverDashboard() {
         console.error("GPS: Error!", error.code, error.message);
         setGpsStatus("error");
         
-        switch (error.code) {
-          case 1: // PERMISSION_DENIED
-            setPermissionState("denied");
-            setGpsError("Permissão negada. Vá às Configurações do navegador/telemóvel, procure este site e permita a localização.");
-            toast({
-              title: "GPS bloqueado",
-              description: "Permita o GPS nas Configurações do navegador e recarregue a página.",
-              variant: "destructive",
-            });
-            break;
-          case 2: // POSITION_UNAVAILABLE
-            setGpsError("GPS indisponível. Verifique se o GPS do telemóvel está ligado nas Configurações do sistema.");
-            toast({
-              title: "GPS indisponível",
-              description: "Ligue o GPS nas Configurações do telemóvel.",
-              variant: "destructive",
-            });
-            break;
-          case 3: // TIMEOUT
-            setGpsError("GPS demorou muito. Tente ao ar livre ou perto de uma janela.");
-            toast({
-              title: "GPS demorou muito",
-              description: "Tente ao ar livre ou perto de uma janela.",
-              variant: "destructive",
-            });
-            break;
-          default:
-            setGpsError(`Erro: ${error.message || "desconhecido"} (código ${error.code})`);
-        }
+        // Try IP location as fallback for any GPS error
+        console.log("GPS: Error, trying IP location fallback...");
+        getLocationByIP().then((ipSuccess) => {
+          if (!ipSuccess) {
+            switch (error.code) {
+              case 1: // PERMISSION_DENIED
+                setPermissionState("denied");
+                setGpsError("GPS bloqueado. Usando localização aproximada por IP.");
+                break;
+              case 2: // POSITION_UNAVAILABLE
+                setGpsError("GPS indisponível. Usando localização aproximada por IP.");
+                break;
+              case 3: // TIMEOUT
+                setGpsError("GPS demorou. Usando localização aproximada por IP.");
+                break;
+              default:
+                setGpsError("Erro no GPS. Digite a localização manualmente.");
+            }
+          }
+        });
       },
       {
         enableHighAccuracy: true,
@@ -731,11 +764,11 @@ export default function DriverDashboard() {
               
               {/* GPS Active Success */}
               {gpsCoords && (
-                <div className="mb-4 p-3 rounded-md bg-green-500/10 border border-green-500/30 text-green-700 dark:text-green-400 text-sm">
+                <div className={`mb-4 p-3 rounded-md text-sm ${usingIpLocation ? 'bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400' : 'bg-green-500/10 border border-green-500/30 text-green-700 dark:text-green-400'}`}>
                   <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+                    <div className={`h-2 w-2 rounded-full animate-pulse ${usingIpLocation ? 'bg-amber-500' : 'bg-green-500'}`} />
                     <Navigation className="h-4 w-4" />
-                    <span className="font-medium">GPS Ativo:</span>
+                    <span className="font-medium">{usingIpLocation ? 'Localização por IP (aproximada):' : 'GPS Ativo:'}</span>
                     <span>{gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}</span>
                   </div>
                 </div>
