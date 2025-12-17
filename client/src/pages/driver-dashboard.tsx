@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { 
@@ -23,8 +24,27 @@ import {
   AlertTriangle,
   Navigation,
   Camera,
-  Target
+  Target,
+  MapPinned
 } from "lucide-react";
+
+// Lista de cidades populares para quando o GPS não funciona
+const POPULAR_LOCATIONS = [
+  { name: "Luanda, Angola", lat: -8.8390, lng: 13.2894 },
+  { name: "Viana, Luanda", lat: -8.9035, lng: 13.3722 },
+  { name: "Cacuaco, Luanda", lat: -8.7833, lng: 13.3667 },
+  { name: "Belas, Luanda", lat: -8.8917, lng: 13.1833 },
+  { name: "Cazenga, Luanda", lat: -8.8333, lng: 13.2833 },
+  { name: "Talatona, Luanda", lat: -8.9167, lng: 13.2000 },
+  { name: "Kilamba, Luanda", lat: -8.9333, lng: 13.2167 },
+  { name: "Benguela, Angola", lat: -12.5763, lng: 13.4055 },
+  { name: "Lobito, Angola", lat: -12.3644, lng: 13.5458 },
+  { name: "Huambo, Angola", lat: -12.7761, lng: 15.7392 },
+  { name: "Lubango, Angola", lat: -14.9167, lng: 13.5000 },
+  { name: "Cabinda, Angola", lat: -5.5500, lng: 12.2000 },
+  { name: "Malanje, Angola", lat: -9.5402, lng: 16.3410 },
+  { name: "Namibe, Angola", lat: -15.1961, lng: 12.1522 },
+];
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Driver, Trip, Alert, Vehicle } from "@shared/schema";
