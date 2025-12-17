@@ -455,8 +455,8 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Motorista não encontrado" });
       }
 
-      // Require assigned vehicle to start trip
-      if (!driver.assignedVehicleId) {
+      // Require assigned vehicle to start trip (reject null, undefined, empty string, or legacy "unassigned" sentinel)
+      if (!driver.assignedVehicleId || driver.assignedVehicleId === "unassigned") {
         return res.status(400).json({ error: "Você precisa ter uma viatura atribuída para iniciar uma viagem" });
       }
       
