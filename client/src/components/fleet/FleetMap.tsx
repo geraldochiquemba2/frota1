@@ -130,10 +130,12 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
   useEffect(() => {
     if (!leafletMapRef.current) return;
 
+    console.log("Drawing active routes:", activeRoutes);
+
     // Remove old route lines not in current routes
     const currentRouteIds = new Set(activeRoutes.map(r => r.vehicleId));
     routeLinesRef.current.forEach((line, id) => {
-      if (!currentRouteIds.has(id)) {
+      if (!currentRouteIds.has(id.split("-")[0])) {
         line.remove();
         routeLinesRef.current.delete(id);
       }
@@ -147,42 +149,27 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
 
     // Draw routes for active trips
     activeRoutes.forEach((route) => {
-      const points: L.LatLngExpression[] = [
-        [route.startLat, route.startLng],
-        [route.currentLat, route.currentLng],
-      ];
-
-      // If there's a destination, add a dashed line to it
+      const isSelected = route.vehicleId === selectedVehicleId;
+      
+      // If there's a destination, draw both completed and remaining paths
       if (route.destLat && route.destLng) {
-        // Draw completed path (solid line from start to current)
-        let completedLine = routeLinesRef.current.get(`${route.vehicleId}-completed`);
-        if (completedLine) {
-          completedLine.setLatLngs(points);
-        } else {
-          completedLine = L.polyline(points, {
-            color: "#22c55e",
-            weight: 4,
-            opacity: 0.8,
-          }).addTo(leafletMapRef.current!);
-          routeLinesRef.current.set(`${route.vehicleId}-completed`, completedLine);
-        }
-
-        // Draw remaining path (dashed line from current to destination)
-        const remainingPoints: L.LatLngExpression[] = [
-          [route.currentLat, route.currentLng],
+        // Draw path from start to destination (full route)
+        const fullRoutePoints: L.LatLngExpression[] = [
+          [route.startLat, route.startLng],
           [route.destLat, route.destLng],
         ];
-        let remainingLine = routeLinesRef.current.get(`${route.vehicleId}-remaining`);
-        if (remainingLine) {
-          remainingLine.setLatLngs(remainingPoints);
+        
+        let fullRouteLine = routeLinesRef.current.get(`${route.vehicleId}-full`);
+        if (fullRouteLine) {
+          fullRouteLine.setLatLngs(fullRoutePoints);
         } else {
-          remainingLine = L.polyline(remainingPoints, {
-            color: "#3b82f6",
-            weight: 3,
-            opacity: 0.7,
-            dashArray: "10, 10",
+          fullRouteLine = L.polyline(fullRoutePoints, {
+            color: isSelected ? "#ef4444" : "#3b82f6",
+            weight: isSelected ? 5 : 3,
+            opacity: isSelected ? 0.9 : 0.6,
+            dashArray: isSelected ? "0" : "8, 8",
           }).addTo(leafletMapRef.current!);
-          routeLinesRef.current.set(`${route.vehicleId}-remaining`, remainingLine);
+          routeLinesRef.current.set(`${route.vehicleId}-full`, fullRouteLine);
         }
 
         // Add destination marker
@@ -191,49 +178,65 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
           className: "custom-marker",
           html: `
             <div style="
-              width: 24px;
-              height: 24px;
+              width: ${isSelected ? "32px" : "24px"};
+              height: ${isSelected ? "32px" : "24px"};
               background: #ef4444;
-              border: 2px solid white;
+              border: 3px solid white;
               border-radius: 50%;
-              box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+              box-shadow: 0 2px 8px rgba(0,0,0,0.4);
               display: flex;
               align-items: center;
               justify-content: center;
+              ${isSelected ? "transform: scale(1.1);" : ""}
             ">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
               </svg>
             </div>
           `,
-          iconSize: [24, 24],
-          iconAnchor: [12, 24],
+          iconSize: [isSelected ? 32 : 24, isSelected ? 32 : 24],
+          iconAnchor: [isSelected ? 16 : 12, isSelected ? 32 : 24],
         });
 
         if (destMarker) {
           destMarker.setLatLng([route.destLat, route.destLng]);
+          destMarker.setIcon(destIcon);
         } else {
           destMarker = L.marker([route.destLat, route.destLng], { icon: destIcon })
             .addTo(leafletMapRef.current!)
             .bindPopup(`<strong>Destino:</strong><br>${route.destination || "Destino da viagem"}`);
           destMarkersRef.current.set(route.vehicleId, destMarker);
         }
+
+        // Fit map to route if selected
+        if (isSelected) {
+          const bounds = L.latLngBounds([
+            [route.startLat, route.startLng],
+            [route.destLat, route.destLng],
+          ]);
+          leafletMapRef.current!.fitBounds(bounds, { padding: [50, 50] });
+        }
       } else {
         // Just show path from start to current position
-        let line = routeLinesRef.current.get(route.vehicleId);
+        const points: L.LatLngExpression[] = [
+          [route.startLat, route.startLng],
+          [route.currentLat, route.currentLng],
+        ];
+        
+        let line = routeLinesRef.current.get(`${route.vehicleId}-path`);
         if (line) {
           line.setLatLngs(points);
         } else {
           line = L.polyline(points, {
-            color: "#22c55e",
-            weight: 4,
-            opacity: 0.9,
+            color: isSelected ? "#22c55e" : "#22c55e",
+            weight: isSelected ? 5 : 3,
+            opacity: isSelected ? 0.9 : 0.7,
           }).addTo(leafletMapRef.current!);
-          routeLinesRef.current.set(route.vehicleId, line);
+          routeLinesRef.current.set(`${route.vehicleId}-path`, line);
         }
       }
     });
-  }, [activeRoutes]);
+  }, [activeRoutes, selectedVehicleId]);
 
   return (
     <div
