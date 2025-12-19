@@ -198,6 +198,14 @@ driverAppRoutes.post("/trips/:id/complete", async (c) => {
       .set({ status: "available" })
       .where(eq(drivers.id, user.userId));
 
+    // Update vehicle odometer with end odometer value
+    if (trip.vehicleId !== "unassigned" && endOdometer) {
+      await db
+        .update(vehicles)
+        .set({ odometer: endOdometer })
+        .where(eq(vehicles.id, trip.vehicleId));
+    }
+
     const [driver] = await db
       .select()
       .from(drivers)
