@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
-import type { Driver } from "@shared/schema";
+import type { Driver, Vehicle } from "@shared/schema";
 
 type DriverStatus = "available" | "on-trip" | "off-duty";
 
@@ -19,6 +19,21 @@ export default function Drivers() {
   const { data: drivers = [], isLoading } = useQuery<Driver[]>({
     queryKey: ["/api/drivers"],
   });
+
+  const { data: vehicles = [] } = useQuery<Vehicle[]>({
+    queryKey: ["/api/vehicles"],
+  });
+
+  const getVehicleInfo = (vehicleId?: string) => {
+    if (!vehicleId) return undefined;
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    if (!vehicle) return undefined;
+    return {
+      plate: vehicle.plate,
+      make: vehicle.make,
+      model: vehicle.model,
+    };
+  };
 
   const filteredDrivers = drivers.filter(d => {
     const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -88,7 +103,7 @@ export default function Drivers() {
               email={driver.email ?? ""}
               licenseExpiry={driver.licenseExpiry ?? ""}
               status={driver.status}
-              assignedVehicle={driver.assignedVehicleId ?? undefined}
+              assignedVehicle={getVehicleInfo(driver.assignedVehicleId)}
               onClick={() => {}}
             />
           ))}

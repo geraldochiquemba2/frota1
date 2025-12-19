@@ -11,7 +11,11 @@ interface DriverCardProps {
   email: string;
   licenseExpiry: string;
   status: string;
-  assignedVehicle?: string;
+  assignedVehicle?: {
+    plate: string;
+    make: string;
+    model: string;
+  };
   onClick?: () => void;
 }
 
@@ -68,7 +72,10 @@ export function DriverCard({
             </Badge>
           </div>
           {assignedVehicle && (
-            <p className="text-sm text-muted-foreground">Veículo: {assignedVehicle}</p>
+            <p className="text-sm text-muted-foreground">
+              Veículo: <span className="font-medium text-foreground">{assignedVehicle.plate}</span>
+              <span className="block text-xs text-muted-foreground">{assignedVehicle.make} {assignedVehicle.model}</span>
+            </p>
           )}
         </div>
       </CardHeader>
