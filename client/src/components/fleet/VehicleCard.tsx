@@ -21,6 +21,7 @@ interface VehicleCardProps {
   fuelLevel?: number;
   odometer?: number;
   photos?: string[];
+  showOdometerWarning?: boolean;
   onView?: () => void;
   onEdit?: () => void;
   onAssignDriver?: () => void;
@@ -39,6 +40,7 @@ export function VehicleCard({
   fuelLevel,
   odometer,
   photos,
+  showOdometerWarning = false,
   onView,
   onEdit,
   onAssignDriver,
@@ -121,6 +123,9 @@ export function VehicleCard({
               <div>
                 <p className="text-muted-foreground">Actualmente a viatura está com</p>
                 <p className="font-semibold text-base">{odometer.toLocaleString()} km</p>
+                {showOdometerWarning && (
+                  <p className="text-xs text-muted-foreground mt-1">Caso não rectifique, prossiga com a viagem com este valor</p>
+                )}
               </div>
             </div>
           </div>

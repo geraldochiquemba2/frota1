@@ -204,6 +204,7 @@ export default function Dashboard() {
                 location={vehicle.location ?? undefined}
                 fuelLevel={vehicle.fuelLevel ?? 0}
                 odometer={vehicle.odometer ?? 0}
+                showOdometerWarning={false}
                 onView={() => {}}
                 onEdit={() => {}}
                 onAssignDriver={() => {}}

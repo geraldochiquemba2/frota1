@@ -445,6 +445,7 @@ export default function Vehicles() {
               fuelLevel={vehicle.fuelLevel ?? 0}
               odometer={vehicle.odometer ?? 0}
               photos={vehicle.photos ?? undefined}
+              showOdometerWarning={false}
               onView={() => openEditDialog(vehicle)}
               onEdit={() => openEditDialog(vehicle)}
               onAssignDriver={() => openAssignDialog(vehicle)}

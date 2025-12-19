@@ -213,6 +213,7 @@ export default function LiveMap() {
                 location={selected.location || undefined}
                 fuelLevel={selected.fuelLevel || undefined}
                 odometer={selected.odometer || undefined}
+                showOdometerWarning={false}
                 onView={() => console.log("View", selected.id)}
                 onEdit={() => console.log("Edit", selected.id)}
                 onAssignDriver={() => console.log("Assign", selected.id)}
