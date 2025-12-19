@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, X, List } from "lucide-react";
+import { Search, X, List, MapPin, Clock, Briefcase } from "lucide-react";
 import type { VehicleStatus } from "@/components/fleet/StatusBadge";
 import type { Vehicle, Driver, Trip } from "@shared/schema";
 
@@ -53,6 +53,10 @@ export default function LiveMap() {
     if (!driverId) return undefined;
     const driver = drivers.find(d => d.id === driverId);
     return driver?.name;
+  };
+
+  const getActiveTrip = (vehicleId: string) => {
+    return trips.find(t => t.vehicleId === vehicleId && t.status === "active");
   };
 
   const vehiclesWithLocation = vehicles.filter(v => v.lat && v.lng);
@@ -176,7 +180,7 @@ export default function LiveMap() {
         />
 
         {selected && (
-          <Card className="absolute bottom-4 left-4 right-4 max-w-md z-10">
+          <Card className="absolute bottom-4 left-4 right-4 max-w-md z-10 max-h-96 overflow-y-auto">
             <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
               <CardTitle className="text-base font-mono">{selected.plate}</CardTitle>
               <Button
@@ -187,7 +191,7 @@ export default function LiveMap() {
                 <X className="h-4 w-4" />
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <VehicleCard
                 id={selected.id}
                 plate={selected.plate}
@@ -203,6 +207,48 @@ export default function LiveMap() {
                 onEdit={() => console.log("Edit", selected.id)}
                 onAssignDriver={() => console.log("Assign", selected.id)}
               />
+              
+              {getActiveTrip(selected.id) && (
+                <div className="pt-4 border-t space-y-3">
+                  <h3 className="font-semibold text-sm">Detalhes da Viagem</h3>
+                  
+                  <div className="flex gap-2 text-sm">
+                    <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground">Origem</p>
+                      <p className="text-sm">{getActiveTrip(selected.id)?.startLocation}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2 text-sm">
+                    <MapPin className="h-4 w-4 mt-0.5 text-green-600 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground">Destino</p>
+                      <p className="text-sm">{getActiveTrip(selected.id)?.destination || "Não definido"}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2 text-sm">
+                    <Clock className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground">Início</p>
+                      <p className="text-sm">
+                        {getActiveTrip(selected.id)?.startTime 
+                          ? new Date(getActiveTrip(selected.id)!.startTime).toLocaleTimeString('pt-AO')
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2 text-sm">
+                    <Briefcase className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground">Propósito</p>
+                      <p className="text-sm">{getActiveTrip(selected.id)?.purpose || "-"}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
