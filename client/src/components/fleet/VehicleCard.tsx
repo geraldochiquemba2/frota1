@@ -107,20 +107,20 @@ export function VehicleCard({
             <span className="truncate">{location}</span>
           </div>
         )}
-        <div className="flex items-center gap-4 text-sm">
-          {fuelLevel !== undefined && (
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Fuel className="h-3.5 w-3.5" />
-              <span>{fuelLevel}%</span>
-            </div>
-          )}
-          {odometer !== undefined && (
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Gauge className="h-3.5 w-3.5" />
-              <span>{odometer.toLocaleString()} km</span>
-            </div>
-          )}
-        </div>
+        {fuelLevel !== undefined && (
+          <div className="flex items-center gap-1.5 text-sm">
+            <Fuel className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-muted-foreground">Combustível:</span>{" "}
+            <span className="font-medium">{fuelLevel}%</span>
+          </div>
+        )}
+        {odometer !== undefined && (
+          <div className="flex items-center gap-1.5 text-sm">
+            <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-muted-foreground">Actualmente a viatura está com</span>{" "}
+            <span className="font-medium">{odometer.toLocaleString()} km</span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
