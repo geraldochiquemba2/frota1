@@ -652,11 +652,17 @@ export default function DriverDashboard() {
           </CardHeader>
           <CardContent>
             {vehicle ? (
-              <div>
+              <div className="space-y-2">
                 <div className="text-2xl font-bold">{vehicle.plate}</div>
                 <p className="text-sm text-muted-foreground">
                   {vehicle.make} {vehicle.model} ({vehicle.year})
                 </p>
+                <div className="flex items-center gap-2 pt-2 border-t">
+                  <Gauge className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">
+                    {vehicle.odometer || 0} km
+                  </span>
+                </div>
               </div>
             ) : (
               <p className="text-muted-foreground">Nenhum veículo atribuído</p>
