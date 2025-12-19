@@ -34,16 +34,20 @@ export default function LiveMap() {
   // Build active routes from trips that have coordinates
   const activeRoutes = trips
     .filter(t => t.status === "active" && t.startLat && t.startLng && t.currentLat && t.currentLng)
-    .map(t => ({
-      vehicleId: t.vehicleId,
-      startLat: t.startLat!,
-      startLng: t.startLng!,
-      currentLat: t.currentLat!,
-      currentLng: t.currentLng!,
-      destLat: t.destLat ?? undefined,
-      destLng: t.destLng ?? undefined,
-      destination: t.destination ?? undefined,
-    }));
+    .map(t => {
+      const route = {
+        vehicleId: t.vehicleId,
+        startLat: t.startLat!,
+        startLng: t.startLng!,
+        currentLat: t.currentLat!,
+        currentLng: t.currentLng!,
+        destLat: t.destLat ?? undefined,
+        destLng: t.destLng ?? undefined,
+        destination: t.destination ?? undefined,
+      };
+      console.log("Active route for vehicle", t.vehicleId, route);
+      return route;
+    });
 
   const getDriverName = (driverId: string | null) => {
     if (!driverId) return undefined;

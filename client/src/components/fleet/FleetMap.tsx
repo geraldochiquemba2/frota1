@@ -226,9 +226,8 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
         } else {
           line = L.polyline(points, {
             color: "#22c55e",
-            weight: 3,
-            opacity: 0.8,
-            dashArray: "8, 8",
+            weight: 4,
+            opacity: 0.9,
           }).addTo(leafletMapRef.current!);
           routeLinesRef.current.set(route.vehicleId, line);
         }
