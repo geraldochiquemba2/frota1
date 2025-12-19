@@ -56,19 +56,45 @@ export default function Dashboard() {
 
   const recentVehicles = vehicles.slice(0, 4);
 
-  // Build active routes from trips
+  // Build active routes from trips - also show vehicle location if trip is active
   const activeRoutes = trips
-    .filter(t => t.status === "active" && t.startLat && t.startLng && t.currentLat && t.currentLng)
-    .map(t => ({
-      vehicleId: t.vehicleId,
-      startLat: t.startLat!,
-      startLng: t.startLng!,
-      currentLat: t.currentLat!,
-      currentLng: t.currentLng!,
-      destLat: t.destLat ?? undefined,
-      destLng: t.destLng ?? undefined,
-      destination: t.destination ?? undefined,
-    }));
+    .filter(t => t.status === "active" && t.vehicleId)
+    .map(t => {
+      // Get the vehicle for this trip
+      const vehicle = vehicles.find(v => v.id === t.vehicleId);
+      
+      // Use trip coordinates if available, otherwise use vehicle location
+      const startLat = t.startLat || vehicle?.lat;
+      const startLng = t.startLng || vehicle?.lng;
+      const currentLat = t.currentLat || vehicle?.lat;
+      const currentLng = t.currentLng || vehicle?.lng;
+      
+      // Only include if we have coordinates
+      if (!startLat || !startLng || !currentLat || !currentLng) {
+        return null;
+      }
+      
+      return {
+        vehicleId: t.vehicleId,
+        startLat,
+        startLng,
+        currentLat,
+        currentLng,
+        destLat: t.destLat ?? undefined,
+        destLng: t.destLng ?? undefined,
+        destination: t.destination ?? undefined,
+      };
+    })
+    .filter(Boolean) as Array<{
+      vehicleId: string;
+      startLat: number;
+      startLng: number;
+      currentLat: number;
+      currentLng: number;
+      destLat?: number;
+      destLng?: number;
+      destination?: string;
+    }>;
 
   return (
     <div className="space-y-6 p-6">

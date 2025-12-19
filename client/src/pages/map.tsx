@@ -41,23 +41,47 @@ export default function LiveMap() {
     }
   }, [selectedVehicle, trips]);
 
-  // Build active routes from trips that have coordinates
+  // Build active routes from trips - also show vehicle location if trip is active
   const activeRoutes = trips
-    .filter(t => t.status === "active" && t.startLat && t.startLng && t.currentLat && t.currentLng)
+    .filter(t => t.status === "active" && t.vehicleId)
     .map(t => {
+      // Get the vehicle for this trip
+      const vehicle = vehicles.find(v => v.id === t.vehicleId);
+      
+      // Use trip coordinates if available, otherwise use vehicle location
+      const startLat = t.startLat || vehicle?.lat;
+      const startLng = t.startLng || vehicle?.lng;
+      const currentLat = t.currentLat || vehicle?.lat;
+      const currentLng = t.currentLng || vehicle?.lng;
+      
+      // Only include if we have coordinates
+      if (!startLat || !startLng || !currentLat || !currentLng) {
+        return null;
+      }
+      
       const route = {
         vehicleId: t.vehicleId,
-        startLat: t.startLat!,
-        startLng: t.startLng!,
-        currentLat: t.currentLat!,
-        currentLng: t.currentLng!,
+        startLat,
+        startLng,
+        currentLat,
+        currentLng,
         destLat: t.destLat ?? undefined,
         destLng: t.destLng ?? undefined,
         destination: t.destination ?? undefined,
       };
       console.log("Active route for vehicle", t.vehicleId, route);
       return route;
-    });
+    })
+    .filter(Boolean) as Array<{
+      vehicleId: string;
+      startLat: number;
+      startLng: number;
+      currentLat: number;
+      currentLng: number;
+      destLat?: number;
+      destLng?: number;
+      destination?: string;
+    }>;
 
   const getDriverName = (driverId: string | null) => {
     if (!driverId) return undefined;
