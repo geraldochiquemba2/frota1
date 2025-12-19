@@ -180,8 +180,8 @@ export default function LiveMap() {
         />
 
         {selected && (
-          <Card className="absolute bottom-4 left-4 right-4 max-w-md z-10 max-h-96 overflow-y-auto">
-            <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+          <Card className="absolute bottom-4 left-4 w-96 z-10 max-h-[calc(100vh-120px)] overflow-y-auto">
+            <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3 sticky top-0 bg-background z-10">
               <CardTitle className="text-base font-mono">{selected.plate}</CardTitle>
               <Button
                 variant="ghost"
@@ -191,7 +191,7 @@ export default function LiveMap() {
                 <X className="h-4 w-4" />
               </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pb-4">
               <VehicleCard
                 id={selected.id}
                 plate={selected.plate}
@@ -212,25 +212,25 @@ export default function LiveMap() {
                 <div className="pt-4 border-t space-y-3">
                   <h3 className="font-semibold text-sm">Detalhes da Viagem</h3>
                   
-                  <div className="flex gap-2 text-sm">
+                  <div className="flex gap-2">
                     <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p className="text-xs text-muted-foreground">Origem</p>
-                      <p className="text-sm">{getActiveTrip(selected.id)?.startLocation}</p>
+                      <p className="text-sm break-words">{getActiveTrip(selected.id)?.startLocation}</p>
                     </div>
                   </div>
                   
-                  <div className="flex gap-2 text-sm">
+                  <div className="flex gap-2">
                     <MapPin className="h-4 w-4 mt-0.5 text-green-600 flex-shrink-0" />
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p className="text-xs text-muted-foreground">Destino</p>
-                      <p className="text-sm">{getActiveTrip(selected.id)?.destination || "Não definido"}</p>
+                      <p className="text-sm break-words">{getActiveTrip(selected.id)?.destination || "Não definido"}</p>
                     </div>
                   </div>
                   
-                  <div className="flex gap-2 text-sm">
+                  <div className="flex gap-2">
                     <Clock className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p className="text-xs text-muted-foreground">Início</p>
                       <p className="text-sm">
                         {getActiveTrip(selected.id)?.startTime 
@@ -240,11 +240,11 @@ export default function LiveMap() {
                     </div>
                   </div>
                   
-                  <div className="flex gap-2 text-sm">
+                  <div className="flex gap-2">
                     <Briefcase className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p className="text-xs text-muted-foreground">Propósito</p>
-                      <p className="text-sm">{getActiveTrip(selected.id)?.purpose || "-"}</p>
+                      <p className="text-sm break-words">{getActiveTrip(selected.id)?.purpose || "-"}</p>
                     </div>
                   </div>
                 </div>
