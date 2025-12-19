@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Truck, Users, AlertTriangle, Wrench, ArrowRight, MapPin } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Vehicle, Alert } from "@shared/schema";
+import type { Vehicle, Alert, Trip } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -34,6 +34,11 @@ export default function Dashboard() {
     queryKey: ["/api/alerts"],
   });
 
+  const { data: trips = [] } = useQuery<Trip[]>({
+    queryKey: ["/api/trips"],
+    refetchInterval: 3000,
+  });
+
   const dismissAlertMutation = useMutation({
     mutationFn: async (id: string) => {
       await apiRequest("PATCH", `/api/alerts/${id}/dismiss`);
@@ -50,6 +55,20 @@ export default function Dashboard() {
   };
 
   const recentVehicles = vehicles.slice(0, 4);
+
+  // Build active routes from trips
+  const activeRoutes = trips
+    .filter(t => t.status === "active" && t.startLat && t.startLng && t.currentLat && t.currentLng)
+    .map(t => ({
+      vehicleId: t.vehicleId,
+      startLat: t.startLat!,
+      startLng: t.startLng!,
+      currentLat: t.currentLat!,
+      currentLng: t.currentLng!,
+      destLat: t.destLat ?? undefined,
+      destLng: t.destLng ?? undefined,
+      destination: t.destination ?? undefined,
+    }));
 
   return (
     <div className="space-y-6 p-6">
@@ -128,6 +147,7 @@ export default function Dashboard() {
                       status: v.status as "active" | "idle" | "maintenance" | "alert",
                       driver: v.driverId ?? undefined,
                     }))}
+                    activeRoutes={activeRoutes}
                     selectedVehicleId={selectedVehicle}
                     onVehicleClick={setSelectedVehicle}
                   />
