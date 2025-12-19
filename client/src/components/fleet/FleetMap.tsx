@@ -47,7 +47,7 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
   useEffect(() => {
     if (!mapRef.current || leafletMapRef.current) return;
 
-    leafletMapRef.current = L.map(mapRef.current).setView([-8.8390, 13.2894], 12);
+    leafletMapRef.current = L.map(mapRef.current).setView([-8.8390, 13.2894], 9);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -60,6 +60,22 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
       }
     };
   }, []);
+
+  // Handle zoom to selected route
+  useEffect(() => {
+    if (!leafletMapRef.current || !selectedVehicleId) return;
+
+    const selectedRoute = activeRoutes.find(r => r.vehicleId === selectedVehicleId);
+    if (selectedRoute && selectedRoute.destLat && selectedRoute.destLng) {
+      setTimeout(() => {
+        const bounds = L.latLngBounds([
+          [selectedRoute.startLat, selectedRoute.startLng],
+          [selectedRoute.destLat!, selectedRoute.destLng!],
+        ]);
+        leafletMapRef.current?.fitBounds(bounds, { padding: [80, 80], maxZoom: 14 });
+      }, 100);
+    }
+  }, [selectedVehicleId, activeRoutes]);
 
   useEffect(() => {
     if (!leafletMapRef.current) return;
@@ -206,15 +222,6 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
             .addTo(leafletMapRef.current!)
             .bindPopup(`<strong>Destino:</strong><br>${route.destination || "Destino da viagem"}`);
           destMarkersRef.current.set(route.vehicleId, destMarker);
-        }
-
-        // Fit map to route if selected
-        if (isSelected) {
-          const bounds = L.latLngBounds([
-            [route.startLat, route.startLng],
-            [route.destLat, route.destLng],
-          ]);
-          leafletMapRef.current!.fitBounds(bounds, { padding: [50, 50] });
         }
       } else {
         // Just show path from start to current position
