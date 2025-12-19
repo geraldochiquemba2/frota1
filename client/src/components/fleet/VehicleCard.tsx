@@ -121,7 +121,6 @@ export function VehicleCard({
               <div>
                 <p className="text-muted-foreground">Actualmente a viatura está com</p>
                 <p className="font-semibold text-base">{odometer.toLocaleString()} km</p>
-                <p className="text-xs text-muted-foreground mt-1">Caso não rectifique, prossiga com a viagem com este valor</p>
               </div>
             </div>
           </div>
