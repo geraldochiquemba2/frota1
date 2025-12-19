@@ -17,7 +17,7 @@ export default function LiveMap() {
 
   const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery<Vehicle[]>({
     queryKey: ["/api/vehicles"],
-    refetchInterval: 10000, // Refresh every 10 seconds for real-time tracking
+    refetchInterval: 5000, // Refresh every 5 seconds for real-time tracking
   });
 
   const { data: drivers = [] } = useQuery<Driver[]>({
@@ -26,7 +26,7 @@ export default function LiveMap() {
 
   const { data: trips = [] } = useQuery<Trip[]>({
     queryKey: ["/api/trips"],
-    refetchInterval: 10000,
+    refetchInterval: 3000, // Refresh every 3 seconds for real-time route tracking
   });
 
   const [showSidebar, setShowSidebar] = useState(true);
