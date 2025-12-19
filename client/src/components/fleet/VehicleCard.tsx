@@ -97,12 +97,10 @@ export function VehicleCard({
             )}
           </div>
         )}
-        {driver && (
-          <div className="text-sm">
-            <span className="text-muted-foreground">Motorista:</span>{" "}
-            <span className="font-medium">{driver}</span>
-          </div>
-        )}
+        <div className="text-sm">
+          <span className="text-muted-foreground">Motorista:</span>{" "}
+          <span className={driver ? "font-medium" : "text-muted-foreground italic"}>{driver || "Sem Motorista"}</span>
+        </div>
         {location && (
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <MapPin className="h-3.5 w-3.5" />
