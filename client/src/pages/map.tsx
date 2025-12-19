@@ -155,31 +155,45 @@ export default function LiveMap() {
                   Nenhum veículo com localização disponível
                 </p>
               ) : (
-                filteredVehicles.map(vehicle => (
-                  <div
-                    key={vehicle.id}
-                    className={`p-3 rounded-md cursor-pointer hover-elevate ${
-                      selectedVehicle === vehicle.id ? "bg-accent" : "bg-card"
-                    }`}
-                    onClick={() => setSelectedVehicle(vehicle.id)}
-                    data-testid={`map-vehicle-item-${vehicle.id}`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-sm font-semibold">{vehicle.plate}</span>
-                      <span className={`h-2 w-2 rounded-full ${
-                        vehicle.status === "active" ? "bg-green-500" :
-                        vehicle.status === "idle" ? "bg-amber-500" :
-                        vehicle.status === "maintenance" ? "bg-blue-500" : "bg-red-500"
-                      }`} />
+                filteredVehicles.map(vehicle => {
+                  const activeTrip = getActiveTrip(vehicle.id);
+                  return (
+                    <div
+                      key={vehicle.id}
+                      className={`p-3 rounded-md cursor-pointer hover-elevate ${
+                        selectedVehicle === vehicle.id ? "bg-accent" : "bg-card"
+                      }`}
+                      onClick={() => setSelectedVehicle(vehicle.id)}
+                      data-testid={`map-vehicle-item-${vehicle.id}`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-sm font-semibold">{vehicle.plate}</span>
+                        <span className={`h-2 w-2 rounded-full ${
+                          vehicle.status === "active" ? "bg-green-500" :
+                          vehicle.status === "idle" ? "bg-amber-500" :
+                          vehicle.status === "maintenance" ? "bg-blue-500" : "bg-red-500"
+                        }`} />
+                      </div>
+                      {vehicle.driverId && (
+                        <p className="text-xs text-muted-foreground mt-1">{getDriverName(vehicle.driverId)}</p>
+                      )}
+                      {activeTrip && (
+                        <div className="mt-2 pt-2 border-t border-border space-y-1">
+                          <p className="text-xs font-semibold text-foreground">Rota Ativa</p>
+                          <p className="text-xs text-muted-foreground truncate" data-testid={`trip-origin-${vehicle.id}`}>
+                            De: {activeTrip.startLocation}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate" data-testid={`trip-destination-${vehicle.id}`}>
+                            Para: {activeTrip.destination || "Não definido"}
+                          </p>
+                        </div>
+                      )}
+                      {!activeTrip && vehicle.location && (
+                        <p className="text-xs text-muted-foreground truncate mt-1">{vehicle.location}</p>
+                      )}
                     </div>
-                    {vehicle.driverId && (
-                      <p className="text-xs text-muted-foreground mt-1">{getDriverName(vehicle.driverId)}</p>
-                    )}
-                    {vehicle.location && (
-                      <p className="text-xs text-muted-foreground truncate">{vehicle.location}</p>
-                    )}
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </ScrollArea>
