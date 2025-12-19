@@ -66,14 +66,41 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
     if (!leafletMapRef.current || !selectedVehicleId) return;
 
     const selectedRoute = activeRoutes.find(r => r.vehicleId === selectedVehicleId);
+    
     if (selectedRoute && selectedRoute.destLat && selectedRoute.destLng) {
-      setTimeout(() => {
-        const bounds = L.latLngBounds([
-          [selectedRoute.startLat, selectedRoute.startLng],
-          [selectedRoute.destLat!, selectedRoute.destLng!],
-        ]);
-        leafletMapRef.current?.fitBounds(bounds, { padding: [80, 80], maxZoom: 14 });
-      }, 100);
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          leafletMapRef.current?.invalidateSize();
+          
+          // Calculate distance between start and destination
+          const latDiff = Math.abs(selectedRoute.destLat! - selectedRoute.startLat);
+          const lngDiff = Math.abs(selectedRoute.destLng! - selectedRoute.startLng);
+          const maxDiff = Math.max(latDiff, lngDiff);
+          
+          // If points are too close, use a fixed zoom level instead of fitBounds
+          if (maxDiff < 0.01) {
+            // Points are very close - set a fixed zoom level
+            leafletMapRef.current?.setView(
+              [(selectedRoute.startLat + selectedRoute.destLat!) / 2, 
+               (selectedRoute.startLng + selectedRoute.destLng!) / 2],
+              13,
+              { animate: true }
+            );
+          } else {
+            // Points are far apart - use fitBounds
+            const bounds = L.latLngBounds([
+              [selectedRoute.startLat, selectedRoute.startLng],
+              [selectedRoute.destLat!, selectedRoute.destLng!],
+            ]);
+            leafletMapRef.current?.fitBounds(bounds, { 
+              padding: [100, 100],
+              maxZoom: 16,
+              animate: true,
+              duration: 1
+            });
+          }
+        }, 200);
+      });
     }
   }, [selectedVehicleId, activeRoutes]);
 
