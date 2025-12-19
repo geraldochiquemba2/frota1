@@ -115,10 +115,15 @@ export function VehicleCard({
           </div>
         )}
         {odometer !== undefined && (
-          <div className="flex items-center gap-1.5 text-sm">
-            <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-muted-foreground">Actualmente a viatura está com</span>{" "}
-            <span className="font-medium">{odometer.toLocaleString()} km</span>
+          <div className="p-2 bg-muted rounded-md border border-muted-foreground/20">
+            <div className="flex items-start gap-2 text-sm">
+              <Gauge className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-muted-foreground">Actualmente a viatura está com</p>
+                <p className="font-semibold text-base">{odometer.toLocaleString()} km</p>
+                <p className="text-xs text-muted-foreground mt-1">Caso não rectifique, prossiga com a viagem com este valor</p>
+              </div>
+            </div>
           </div>
         )}
       </CardContent>
