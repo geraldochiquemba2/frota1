@@ -946,14 +946,17 @@ export default function DriverDashboard() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="startOdometer">
-                    Odômetro Inicial (km)
-                    {vehicle?.odometer && (
-                      <span className="text-muted-foreground font-normal ml-2">
-                        (atual: {vehicle.odometer.toLocaleString()} km)
-                      </span>
-                    )}
-                  </Label>
+                  {vehicle?.odometer !== undefined && (
+                    <div className="p-3 bg-muted rounded-md border border-muted-foreground/20 mb-2">
+                      <p className="text-sm text-muted-foreground">
+                        Actualmente a viatura está com <span className="font-semibold">{vehicle.odometer.toLocaleString()} km</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Caso não rectifique, prossiga com a viagem com este valor
+                      </p>
+                    </div>
+                  )}
+                  <Label htmlFor="startOdometer">Odómetro Inicial (km)</Label>
                   <Input
                     id="startOdometer"
                     type="number"
