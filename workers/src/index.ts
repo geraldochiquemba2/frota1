@@ -19,6 +19,9 @@ export type Bindings = {
   DATABASE_URL: string;
   JWT_SECRET: string;
   ENVIRONMENT: string;
+  ASSETS?: {
+    fetch: (request: Request) => Promise<Response>;
+  };
 };
 
 export type Variables = {
@@ -82,6 +85,30 @@ app.route("/api/suppliers", supplierRoutes);
 app.route("/api/fuel", fuelRoutes);
 app.route("/api/finance", financeRoutes);
 app.route("/api/inventory", inventoryRoutes);
+
+// Serve index.html for SPA routing (client-side routes)
+app.get("*", async (c) => {
+  const assetsFetch = c.env.ASSETS?.fetch;
+  if (!assetsFetch) {
+    return c.text("Application failed to load", 500);
+  }
+
+  try {
+    const response = await assetsFetch(c.req.raw);
+    if (response.status === 404) {
+      // If asset not found, serve index.html for SPA routing
+      return await assetsFetch(new Request(new URL("/index.html", c.req.url).toString(), c.req.raw));
+    }
+    return response;
+  } catch {
+    // Fallback: serve index.html
+    try {
+      return await assetsFetch(new Request(new URL("/index.html", c.req.url).toString(), c.req.raw));
+    } catch {
+      return c.text("Application failed to load", 500);
+    }
+  }
+});
 
 app.notFound((c) => {
   return c.json({ error: "Endpoint não encontrado" }, 404);
