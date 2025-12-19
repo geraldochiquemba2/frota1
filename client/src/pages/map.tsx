@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FleetMap } from "@/components/fleet/FleetMap";
 import { VehicleCard } from "@/components/fleet/VehicleCard";
@@ -24,12 +24,22 @@ export default function LiveMap() {
     queryKey: ["/api/drivers"],
   });
 
-  const { data: trips = [] } = useQuery<Trip[]>({
+  const { data: trips = [], isLoading: tripsLoading } = useQuery<Trip[]>({
     queryKey: ["/api/trips"],
     refetchInterval: 3000, // Refresh every 3 seconds for real-time route tracking
   });
 
   const [showSidebar, setShowSidebar] = useState(true);
+
+  // Debug logging for trip data
+  useEffect(() => {
+    if (selectedVehicle && trips.length > 0) {
+      const activeTrip = trips.find(t => t.vehicleId === selectedVehicle && t.status === "active");
+      console.log("Selected vehicle:", selectedVehicle);
+      console.log("Total trips:", trips.length);
+      console.log("Active trip for vehicle:", activeTrip);
+    }
+  }, [selectedVehicle, trips]);
 
   // Build active routes from trips that have coordinates
   const activeRoutes = trips
@@ -208,7 +218,12 @@ export default function LiveMap() {
                 onAssignDriver={() => console.log("Assign", selected.id)}
               />
               
-              {getActiveTrip(selected.id) && (
+              {tripsLoading ? (
+                <div className="pt-4 border-t space-y-3">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              ) : getActiveTrip(selected.id) ? (
                 <div className="pt-4 border-t space-y-3">
                   <h3 className="font-semibold text-sm">Detalhes da Viagem</h3>
                   
@@ -248,7 +263,7 @@ export default function LiveMap() {
                     </div>
                   </div>
                 </div>
-              )}
+              ) : null}
             </CardContent>
           </Card>
         )}
