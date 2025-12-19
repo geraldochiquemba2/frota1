@@ -264,28 +264,35 @@ export default function LiveMap() {
                 </div>
               ) : getActiveTrip(selected.id) ? (
                 <div className="pt-4 border-t space-y-3">
-                  <h3 className="font-semibold text-sm">Detalhes da Viagem</h3>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    <h3 className="font-semibold text-sm">Rota Ativa</h3>
+                  </div>
                   
                   <div className="flex gap-2">
                     <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground">Origem</p>
-                      <p className="text-sm break-words">{getActiveTrip(selected.id)?.startLocation}</p>
+                      <p className="text-xs text-muted-foreground">Ponto de Partida</p>
+                      <p className="text-sm break-words font-medium">{getActiveTrip(selected.id)?.startLocation}</p>
                     </div>
                   </div>
                   
+                  <div className="bg-muted/50 rounded p-2 py-1 flex items-center justify-center">
+                    <p className="text-xs text-muted-foreground">↓ Rota Ativa ↓</p>
+                  </div>
+                  
                   <div className="flex gap-2">
-                    <MapPin className="h-4 w-4 mt-0.5 text-green-600 flex-shrink-0" />
+                    <MapPin className="h-4 w-4 mt-0.5 text-red-600 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-muted-foreground">Destino</p>
-                      <p className="text-sm break-words">{getActiveTrip(selected.id)?.destination || "Não definido"}</p>
+                      <p className="text-sm break-words font-medium text-red-600">{getActiveTrip(selected.id)?.destination || "Não definido"}</p>
                     </div>
                   </div>
                   
                   <div className="flex gap-2">
                     <Clock className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground">Início</p>
+                      <p className="text-xs text-muted-foreground">Hora de Início</p>
                       <p className="text-sm">
                         {getActiveTrip(selected.id)?.startTime 
                           ? new Date(getActiveTrip(selected.id)!.startTime).toLocaleTimeString('pt-AO')
@@ -302,7 +309,11 @@ export default function LiveMap() {
                     </div>
                   </div>
                 </div>
-              ) : null}
+              ) : (
+                <div className="pt-4 border-t text-center py-4">
+                  <p className="text-xs text-muted-foreground">Nenhuma rota ativa para este veículo</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
