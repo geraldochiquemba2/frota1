@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import type { VehicleStatus } from "./StatusBadge";
+import { extractCoordinatesFromLocation } from "@shared/locations";
 
 interface VehicleMarker {
   id: string;
@@ -13,13 +14,14 @@ interface VehicleMarker {
 
 interface ActiveRoute {
   vehicleId: string;
-  startLat: number;
-  startLng: number;
+  startLat: number | null;
+  startLng: number | null;
   currentLat: number;
   currentLng: number;
   destLat?: number;
   destLng?: number;
   destination?: string;
+  startLocation?: string;
 }
 
 interface FleetMapProps {
@@ -68,39 +70,54 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
     const selectedRoute = activeRoutes.find(r => r.vehicleId === selectedVehicleId);
     
     if (selectedRoute && selectedRoute.destLat && selectedRoute.destLng) {
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          leafletMapRef.current?.invalidateSize();
-          
-          // Calculate distance between start and destination
-          const latDiff = Math.abs(selectedRoute.destLat! - selectedRoute.startLat);
-          const lngDiff = Math.abs(selectedRoute.destLng! - selectedRoute.startLng);
-          const maxDiff = Math.max(latDiff, lngDiff);
-          
-          // If points are too close, use a fixed zoom level instead of fitBounds
-          if (maxDiff < 0.01) {
-            // Points are very close - set a fixed zoom level
-            leafletMapRef.current?.setView(
-              [(selectedRoute.startLat + selectedRoute.destLat!) / 2, 
-               (selectedRoute.startLng + selectedRoute.destLng!) / 2],
-              13,
-              { animate: true }
-            );
-          } else {
-            // Points are far apart - use fitBounds
-            const bounds = L.latLngBounds([
-              [selectedRoute.startLat, selectedRoute.startLng],
-              [selectedRoute.destLat!, selectedRoute.destLng!],
-            ]);
-            leafletMapRef.current?.fitBounds(bounds, { 
-              padding: [100, 100],
-              maxZoom: 16,
-              animate: true,
-              duration: 1
-            });
-          }
-        }, 200);
-      });
+      // Get start coordinates - use provided coords or extract from location text
+      let startLat = selectedRoute.startLat;
+      let startLng = selectedRoute.startLng;
+      
+      if ((startLat === null || startLat === undefined) && selectedRoute.startLocation) {
+        const coords = extractCoordinatesFromLocation(selectedRoute.startLocation);
+        if (coords) {
+          startLat = coords.lat;
+          startLng = coords.lng;
+        }
+      }
+      
+      // Only proceed if we have valid start coordinates
+      if (startLat !== null && startLat !== undefined && startLng !== null && startLng !== undefined) {
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            leafletMapRef.current?.invalidateSize();
+            
+            // Calculate distance between start and destination
+            const latDiff = Math.abs(selectedRoute.destLat! - startLat);
+            const lngDiff = Math.abs(selectedRoute.destLng! - startLng);
+            const maxDiff = Math.max(latDiff, lngDiff);
+            
+            // If points are too close, use a fixed zoom level instead of fitBounds
+            if (maxDiff < 0.01) {
+              // Points are very close - set a fixed zoom level
+              leafletMapRef.current?.setView(
+                [(startLat + selectedRoute.destLat!) / 2, 
+                 (startLng + selectedRoute.destLng!) / 2],
+                13,
+                { animate: true }
+              );
+            } else {
+              // Points are far apart - use fitBounds
+              const bounds = L.latLngBounds([
+                [startLat, startLng],
+                [selectedRoute.destLat!, selectedRoute.destLng!],
+              ]);
+              leafletMapRef.current?.fitBounds(bounds, { 
+                padding: [100, 100],
+                maxZoom: 16,
+                animate: true,
+                duration: 1
+              });
+            }
+          }, 200);
+        });
+      }
     }
   }, [selectedVehicleId, activeRoutes]);
 
@@ -194,11 +211,28 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
     activeRoutes.forEach((route) => {
       const isSelected = route.vehicleId === selectedVehicleId;
       
+      // Get start coordinates - use provided coords or extract from location text
+      let startLat = route.startLat;
+      let startLng = route.startLng;
+      
+      if ((startLat === null || startLat === undefined) && route.startLocation) {
+        const coords = extractCoordinatesFromLocation(route.startLocation);
+        if (coords) {
+          startLat = coords.lat;
+          startLng = coords.lng;
+        }
+      }
+      
+      // If we still don't have start coords, skip drawing this route
+      if (startLat === null || startLat === undefined || startLng === null || startLng === undefined) {
+        return;
+      }
+      
       // If there's a destination, draw both completed and remaining paths
       if (route.destLat && route.destLng) {
         // Draw path from start to destination (full route)
         const fullRoutePoints: L.LatLngExpression[] = [
-          [route.startLat, route.startLng],
+          [startLat, startLng],
           [route.destLat, route.destLng],
         ];
         
@@ -253,7 +287,7 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
       } else {
         // Just show path from start to current position
         const points: L.LatLngExpression[] = [
-          [route.startLat, route.startLng],
+          [startLat, startLng],
           [route.currentLat, route.currentLng],
         ];
         

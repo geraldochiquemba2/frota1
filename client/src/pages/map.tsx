@@ -48,39 +48,48 @@ export default function LiveMap() {
       // Get the vehicle for this trip
       const vehicle = vehicles.find(v => v.id === t.vehicleId);
       
-      // Use trip coordinates if available, otherwise use vehicle location
-      const startLat = t.startLat || vehicle?.lat;
-      const startLng = t.startLng || vehicle?.lng;
+      // Current position must exist
       const currentLat = t.currentLat || vehicle?.lat;
       const currentLng = t.currentLng || vehicle?.lng;
       
-      // Only include if we have coordinates
-      if (!startLat || !startLng || !currentLat || !currentLng) {
+      // Start coordinates can be from trip OR extracted from location text later
+      const currentStartLat = t.startLat || vehicle?.lat;
+      const currentStartLng = t.startLng || vehicle?.lng;
+      
+      // Only include if we have current coordinates and either start coords or start location text
+      if (!currentLat || !currentLng) {
+        return null;
+      }
+      
+      // Skip if no start data at all (no coordinates and no location text)
+      if (!currentStartLat && !currentStartLng && !t.startLocation) {
         return null;
       }
       
       const route = {
         vehicleId: t.vehicleId,
-        startLat,
-        startLng,
+        startLat: t.startLat,
+        startLng: t.startLng,
         currentLat,
         currentLng,
         destLat: t.destLat ?? undefined,
         destLng: t.destLng ?? undefined,
         destination: t.destination ?? undefined,
+        startLocation: t.startLocation ?? undefined,
       };
       console.log("Active route for vehicle", t.vehicleId, route);
       return route;
     })
     .filter(Boolean) as Array<{
       vehicleId: string;
-      startLat: number;
-      startLng: number;
+      startLat: number | null;
+      startLng: number | null;
       currentLat: number;
       currentLng: number;
       destLat?: number;
       destLng?: number;
       destination?: string;
+      startLocation?: string;
     }>;
 
   const getDriverName = (driverId: string | null) => {
