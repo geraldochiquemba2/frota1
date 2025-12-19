@@ -349,7 +349,6 @@ export default function FuelPage() {
               <SelectValue placeholder="Selecione o motorista" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Nenhum</SelectItem>
               {drivers.map((driver) => (
                 <SelectItem key={driver.id} value={driver.id}>
                   {driver.name}
@@ -462,7 +461,6 @@ export default function FuelPage() {
               <SelectValue placeholder="Selecione o fornecedor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Nenhum</SelectItem>
               {suppliers
                 .filter((s) => s.categories?.includes("Combustível"))
                 .map((supplier) => (
