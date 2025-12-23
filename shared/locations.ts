@@ -4,12 +4,12 @@ export const locationCoordinates: Record<string, { lat: number; lng: number }> =
   "luanda": { lat: -8.8383, lng: 13.2344 },
   
   // Benguela Province
-  "dombe grande": { lat: -12.3824, lng: 13.5854 },
-  "baía farta": { lat: -12.9238, lng: 13.3584 },
+  "dombe grande": { lat: -11.9, lng: 13.5 },
+  "baía farta": { lat: -12.5, lng: 13.4 },
   "benguela": { lat: -12.5764, lng: 13.4084 },
   
   // Bié Province  
-  "camacupa": { lat: -8.9011, lng: 13.3511 },
+  "camacupa": { lat: -8.9, lng: 13.35 },
   "ringoma": { lat: -8.9, lng: 13.35 },
   "kuito": { lat: -8.8667, lng: 16.95 },
   
