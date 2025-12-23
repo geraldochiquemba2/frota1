@@ -185,11 +185,11 @@ export default function LiveMap() {
                       {activeTrip && (
                         <div className="mt-2 pt-2 border-t border-border space-y-1">
                           <p className="text-xs font-semibold text-foreground">Rota Ativa</p>
-                          <p className="text-xs text-muted-foreground truncate" data-testid={`trip-origin-${vehicle.id}`}>
-                            De: {activeTrip.startLocation}
+                          <p className="text-xs text-muted-foreground" data-testid={`trip-origin-${vehicle.id}`}>
+                            <span className="font-medium">De:</span> {activeTrip.startLocation}
                           </p>
-                          <p className="text-xs text-muted-foreground truncate" data-testid={`trip-destination-${vehicle.id}`}>
-                            Para: {activeTrip.destination || "Não definido"}
+                          <p className="text-xs text-muted-foreground" data-testid={`trip-destination-${vehicle.id}`}>
+                            <span className="font-medium">Para:</span> {activeTrip.destination || "Não definido"}
                           </p>
                         </div>
                       )}

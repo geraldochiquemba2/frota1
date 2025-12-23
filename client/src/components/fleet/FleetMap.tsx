@@ -69,56 +69,78 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
 
     const selectedRoute = activeRoutes.find(r => r.vehicleId === selectedVehicleId);
     
-    if (selectedRoute && selectedRoute.destLat && selectedRoute.destLng) {
-      // Get start coordinates - use provided coords or extract from location text
-      let startLat = selectedRoute.startLat;
-      let startLng = selectedRoute.startLng;
-      
-      if ((startLat === null || startLat === undefined) && selectedRoute.startLocation) {
-        const coords = extractCoordinatesFromLocation(selectedRoute.startLocation);
-        if (coords) {
-          startLat = coords.lat;
-          startLng = coords.lng;
-        }
-      }
-      
-      // Only proceed if we have valid start coordinates
-      if (startLat !== null && startLat !== undefined && startLng !== null && startLng !== undefined) {
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            leafletMapRef.current?.invalidateSize();
-            
-            // Calculate distance between start and destination
-            const latDiff = Math.abs(selectedRoute.destLat! - startLat);
-            const lngDiff = Math.abs(selectedRoute.destLng! - startLng);
-            const maxDiff = Math.max(latDiff, lngDiff);
-            
-            // If points are too close, use a fixed zoom level instead of fitBounds
-            if (maxDiff < 0.01) {
-              // Points are very close - set a fixed zoom level
-              leafletMapRef.current?.setView(
-                [(startLat + selectedRoute.destLat!) / 2, 
-                 (startLng + selectedRoute.destLng!) / 2],
-                13,
-                { animate: true }
-              );
-            } else {
-              // Points are far apart - use fitBounds
-              const bounds = L.latLngBounds([
-                [startLat, startLng],
-                [selectedRoute.destLat!, selectedRoute.destLng!],
-              ]);
-              leafletMapRef.current?.fitBounds(bounds, { 
-                padding: [100, 100],
-                maxZoom: 16,
-                animate: true,
-                duration: 1
-              });
-            }
-          }, 200);
-        });
+    if (!selectedRoute) return;
+
+    // Get start coordinates - use provided coords or extract from location text
+    let startLat = selectedRoute.startLat;
+    let startLng = selectedRoute.startLng;
+    
+    if ((startLat === null || startLat === undefined) && selectedRoute.startLocation) {
+      const coords = extractCoordinatesFromLocation(selectedRoute.startLocation);
+      if (coords) {
+        startLat = coords.lat;
+        startLng = coords.lng;
       }
     }
+    
+    // Validate we have start coordinates
+    if (startLat === null || startLat === undefined || startLng === null || startLng === undefined) {
+      return;
+    }
+    
+    // Try to zoom to destination if available, otherwise zoom to current position
+    let destLat = selectedRoute.destLat;
+    let destLng = selectedRoute.destLng;
+    
+    // If no destination coordinates, try to extract from destination text
+    if ((destLat === null || destLat === undefined) && selectedRoute.destination) {
+      const destCoords = extractCoordinatesFromLocation(selectedRoute.destination);
+      if (destCoords) {
+        destLat = destCoords.lat;
+        destLng = destCoords.lng;
+      }
+    }
+    
+    // Use current position as fallback for zoom calculation
+    const zoomLat2 = destLat ?? selectedRoute.currentLat;
+    const zoomLng2 = destLng ?? selectedRoute.currentLng;
+    
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        if (!leafletMapRef.current) return;
+        
+        leafletMapRef.current.invalidateSize();
+        
+        // Calculate distance between points
+        const latDiff = Math.abs(zoomLat2 - startLat);
+        const lngDiff = Math.abs(zoomLng2 - startLng);
+        const maxDiff = Math.max(latDiff, lngDiff);
+        
+        // If points are too close (same location), use a fixed zoom level
+        if (maxDiff < 0.01) {
+          leafletMapRef.current.setView(
+            [(startLat + zoomLat2) / 2, (startLng + zoomLng2) / 2],
+            13,
+            { animate: true, duration: 1 }
+          );
+        } else {
+          // Points are far apart - use fitBounds with all three points
+          const boundsPoints: L.LatLngExpression[] = [
+            [startLat, startLng],
+            [selectedRoute.currentLat, selectedRoute.currentLng],
+            [zoomLat2, zoomLng2],
+          ];
+          
+          const bounds = L.latLngBounds(boundsPoints);
+          leafletMapRef.current.fitBounds(bounds, { 
+            padding: [80, 80],
+            maxZoom: 14,
+            animate: true,
+            duration: 1
+          });
+        }
+      }, 150);
+    });
   }, [selectedVehicleId, activeRoutes]);
 
   useEffect(() => {
