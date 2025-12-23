@@ -190,7 +190,6 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
   useEffect(() => {
     if (!leafletMapRef.current) return;
 
-
     // Remove old route lines not in current routes
     const currentRouteIds = new Set(activeRoutes.map(r => r.vehicleId));
     routeLinesRef.current.forEach((line, id) => {
@@ -227,25 +226,59 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
         return;
       }
       
-      // If there's a destination, draw both completed and remaining paths
-      if (route.destLat && route.destLng) {
-        // Draw path from start to destination (full route)
-        const fullRoutePoints: L.LatLngExpression[] = [
-          [startLat, startLng],
+      // ROTA TRACEJADA: Draw path from current position to destination
+      if (route.destLat !== undefined && route.destLng !== undefined) {
+        // Draw the dashed route line from current position to destination
+        const routePoints: L.LatLngExpression[] = [
+          [route.currentLat, route.currentLng],
           [route.destLat, route.destLng],
         ];
         
-        let fullRouteLine = routeLinesRef.current.get(`${route.vehicleId}-full`);
-        if (fullRouteLine) {
-          fullRouteLine.setLatLngs(fullRoutePoints);
+        let routeLine = routeLinesRef.current.get(`${route.vehicleId}-route`);
+        const lineColor = isSelected ? "#ef4444" : "#3b82f6";
+        const lineWeight = isSelected ? 4 : 3;
+        const lineOpacity = isSelected ? 0.9 : 0.7;
+        
+        if (routeLine) {
+          routeLine.setLatLngs(routePoints);
+          routeLine.setStyle({
+            color: lineColor,
+            weight: lineWeight,
+            opacity: lineOpacity,
+            dashArray: "10, 5",
+            lineCap: "round" as any,
+            lineJoin: "round" as any,
+          });
         } else {
-          fullRouteLine = L.polyline(fullRoutePoints, {
-            color: isSelected ? "#ef4444" : "#3b82f6",
-            weight: isSelected ? 5 : 3,
-            opacity: isSelected ? 0.9 : 0.6,
-            dashArray: isSelected ? "0" : "8, 8",
+          routeLine = L.polyline(routePoints, {
+            color: lineColor,
+            weight: lineWeight,
+            opacity: lineOpacity,
+            dashArray: "10, 5",
+            lineCap: "round" as any,
+            lineJoin: "round" as any,
           }).addTo(leafletMapRef.current!);
-          routeLinesRef.current.set(`${route.vehicleId}-full`, fullRouteLine);
+          routeLinesRef.current.set(`${route.vehicleId}-route`, routeLine);
+        }
+
+        // Draw path from start to current position (completed journey)
+        const completedPoints: L.LatLngExpression[] = [
+          [startLat, startLng],
+          [route.currentLat, route.currentLng],
+        ];
+        
+        let completedLine = routeLinesRef.current.get(`${route.vehicleId}-completed`);
+        if (completedLine) {
+          completedLine.setLatLngs(completedPoints);
+        } else {
+          completedLine = L.polyline(completedPoints, {
+            color: isSelected ? "#22c55e" : "#22c55e",
+            weight: isSelected ? 4 : 3,
+            opacity: isSelected ? 0.9 : 0.7,
+            lineCap: "round" as any,
+            lineJoin: "round" as any,
+          }).addTo(leafletMapRef.current!);
+          routeLinesRef.current.set(`${route.vehicleId}-completed`, completedLine);
         }
 
         // Add destination marker
@@ -284,7 +317,7 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
           destMarkersRef.current.set(route.vehicleId, destMarker);
         }
       } else {
-        // Just show path from start to current position
+        // No destination - just show path from start to current position
         const points: L.LatLngExpression[] = [
           [startLat, startLng],
           [route.currentLat, route.currentLng],
@@ -296,8 +329,10 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
         } else {
           line = L.polyline(points, {
             color: isSelected ? "#22c55e" : "#22c55e",
-            weight: isSelected ? 5 : 3,
+            weight: isSelected ? 4 : 3,
             opacity: isSelected ? 0.9 : 0.7,
+            lineCap: "round" as any,
+            lineJoin: "round" as any,
           }).addTo(leafletMapRef.current!);
           routeLinesRef.current.set(`${route.vehicleId}-path`, line);
         }
