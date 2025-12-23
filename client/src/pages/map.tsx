@@ -52,17 +52,13 @@ export default function LiveMap() {
       const currentLat = t.currentLat || vehicle?.lat;
       const currentLng = t.currentLng || vehicle?.lng;
       
-      // Start coordinates can be from trip OR extracted from location text later
-      const currentStartLat = t.startLat || vehicle?.lat;
-      const currentStartLng = t.startLng || vehicle?.lng;
-      
       // Only include if we have current coordinates and either start coords or start location text
       if (!currentLat || !currentLng) {
         return null;
       }
       
       // Skip if no start data at all (no coordinates and no location text)
-      if (!currentStartLat && !currentStartLng && !t.startLocation) {
+      if (!t.startLat && !t.startLng && !t.startLocation) {
         return null;
       }
       
