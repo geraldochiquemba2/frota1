@@ -190,7 +190,6 @@ export function FleetMap({ vehicles, activeRoutes = [], onVehicleClick, selected
   useEffect(() => {
     if (!leafletMapRef.current) return;
 
-    console.log("Drawing active routes:", activeRoutes);
 
     // Remove old route lines not in current routes
     const currentRouteIds = new Set(activeRoutes.map(r => r.vehicleId));
