@@ -15,7 +15,6 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Vehicles from "@/pages/vehicles";
 import Drivers from "@/pages/drivers";
-import LiveMap from "@/pages/map";
 import Maintenance from "@/pages/maintenance";
 import Trips from "@/pages/trips";
 import Alerts from "@/pages/alerts";
@@ -33,7 +32,6 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/vehicles" component={Vehicles} />
       <Route path="/drivers" component={Drivers} />
-      <Route path="/map" component={LiveMap} />
       <Route path="/maintenance" component={Maintenance} />
       <Route path="/fuel" component={Fuel} />
       <Route path="/finance" component={Finance} />
