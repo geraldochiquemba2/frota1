@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { TripLogCard } from "@/components/fleet/TripLogCard";
+import { RouteMap } from "@/components/RouteMap";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, ClipboardList } from "lucide-react";
+import { Plus, Search, ClipboardList, X } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Trip, InsertTrip, Vehicle, Driver } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -42,6 +43,8 @@ export default function Trips() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "ongoing" | "completed">("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [newTrip, setNewTrip] = useState({
     vehicleId: "",
     vehiclePlate: "",
@@ -117,6 +120,11 @@ export default function Trips() {
     if (driver) {
       setNewTrip({ ...newTrip, driverId, driverName: driver.name });
     }
+  };
+
+  const handleViewTrip = (trip: Trip) => {
+    setSelectedTrip(trip);
+    setIsViewModalOpen(true);
   };
 
   const tripCounts = {
@@ -248,6 +256,54 @@ export default function Trips() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="flex flex-row items-start justify-between">
+              <div>
+                <DialogTitle>Visualizar Rota</DialogTitle>
+                <DialogDescription>
+                  {selectedTrip?.vehiclePlate} - {selectedTrip?.driverName}
+                </DialogDescription>
+              </div>
+              <button onClick={() => setIsViewModalOpen(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </DialogHeader>
+            
+            {selectedTrip && (
+              <div className="space-y-4">
+                <RouteMap
+                  startLocation={selectedTrip.startLocation || "Localização desconhecida"}
+                  destination={selectedTrip.destination || selectedTrip.endLocation || "Destino desconhecido"}
+                />
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Partida</p>
+                    <p className="font-medium">{selectedTrip.startTime ? new Date(selectedTrip.startTime).toLocaleString('pt-BR') : "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Chegada</p>
+                    <p className="font-medium">{selectedTrip.endTime ? new Date(selectedTrip.endTime).toLocaleString('pt-BR') : "Em andamento"}</p>
+                  </div>
+                  {selectedTrip.distance && (
+                    <div>
+                      <p className="text-muted-foreground">Distância</p>
+                      <p className="font-medium">{selectedTrip.distance} km</p>
+                    </div>
+                  )}
+                  {selectedTrip.purpose && (
+                    <div>
+                      <p className="text-muted-foreground">Finalidade</p>
+                      <p className="font-medium">{selectedTrip.purpose}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -301,7 +357,7 @@ export default function Trips() {
               startLng={trip.startLng ?? undefined}
               currentLat={trip.currentLat ?? undefined}
               currentLng={trip.currentLng ?? undefined}
-              onClick={() => {}}
+              onClick={() => handleViewTrip(trip)}
             />
           ))}
         </div>
